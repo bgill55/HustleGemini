@@ -1435,7 +1435,7 @@ tbody tr:hover {
     border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 2.5rem;
-    max-width: 550px;
+    max-width: 720px;
     width: 90%;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.1);
     text-align: center;
@@ -1544,5 +1544,86 @@ tbody tr:hover {
 
 .btn-transparent:hover {
     color: var(--text-primary) !important;
+}
+
+/* TIER CARDS — Onboarding Free vs Pro */
+.tier-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.tier-card {
+    border-radius: 12px;
+    padding: 1.25rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.tier-free {
+    background: rgba(255, 215, 0, 0.06);
+    border: 1px solid rgba(255, 215, 0, 0.35);
+}
+
+.tier-pro {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.tier-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    background: rgba(255, 215, 0, 0.15);
+    color: var(--gold);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    margin-bottom: 0.6rem;
+    width: fit-content;
+}
+
+.tier-badge-pro {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.tier-card h4 {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.tier-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex: 1;
+}
+
+.tier-features li {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tier-features li i {
+    color: var(--gold);
+    font-size: 0.65rem;
+    flex-shrink: 0;
+}
+
+@media (max-width: 540px) {
+    .tier-cards {
+        grid-template-columns: 1fr;
+    }
 }
 

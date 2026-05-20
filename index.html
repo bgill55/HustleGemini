@@ -406,30 +406,46 @@
                 <h2>Welcome to HUSTLE<span class="gold-text">GEMINI</span></h2>
                 <p>Your AI Co-founder Command Center.</p>
             </div>
-            
+
             <div class="onboarding-body">
-                <p>Midas is an AI agent that helps you brainstorm, plan, and execute profitable side hustles from scratch using real-time trends.</p>
-                
-                <div class="api-key-setup-box">
-                    <h3><i class="fa-solid fa-key"></i> Connect Your Co-founder</h3>
-                    <p>To wake up Midas, you need a free Google Gemini API key.</p>
-                    
-                    <ol class="setup-steps">
-                        <li>Go to <a href="https://aistudio.google.com/" target="_blank" class="gold-text">Google AI Studio <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.7rem;"></i></a></li>
-                        <li>Click <strong>"Get API Key"</strong> and create a new key.</li>
-                        <li>Paste your key below to initialize the system.</li>
-                    </ol>
-                    
-                    <div class="modal-input-group">
-                        <input type="password" id="modal-api-key-input" placeholder="AIzaSy..." autocomplete="off">
-                        <button class="btn btn-gold" id="modal-save-key-btn">Initialize System</button>
+                <p style="text-align:center; margin-bottom: 1.25rem;">Midas helps you brainstorm, plan, and execute profitable side hustles using real-time Google Trends. Choose how you want to start:</p>
+
+                <div class="tier-cards">
+                    <!-- FREE TIER -->
+                    <div class="tier-card tier-free">
+                        <div class="tier-badge">⚡ FREE</div>
+                        <h4>Start Instantly</h4>
+                        <ul class="tier-features">
+                            <li><i class="fa-solid fa-check"></i> Llama 3.3 70B (Cerebras)</li>
+                            <li><i class="fa-solid fa-check"></i> Live Google Trends scoring</li>
+                            <li><i class="fa-solid fa-check"></i> Brainstorm, plan &amp; export</li>
+                            <li><i class="fa-solid fa-check"></i> No account required</li>
+                        </ul>
+                        <button class="btn btn-gold" id="close-onboarding-btn" style="width:100%; margin-top:1rem;">
+                            Start for Free →
+                        </button>
+                    </div>
+
+                    <!-- PRO TIER -->
+                    <div class="tier-card tier-pro">
+                        <div class="tier-badge tier-badge-pro">✦ PRO</div>
+                        <h4>Gemini 3 Flash</h4>
+                        <ul class="tier-features">
+                            <li><i class="fa-solid fa-check"></i> Google Gemini 3 Flash model</li>
+                            <li><i class="fa-solid fa-check"></i> Superior reasoning &amp; quality</li>
+                            <li><i class="fa-solid fa-check"></i> Multimodal understanding</li>
+                            <li><i class="fa-solid fa-check"></i> Your own private session</li>
+                        </ul>
+                        <div class="modal-input-group" style="margin-top:0.75rem;">
+                            <input type="password" id="modal-api-key-input" placeholder="Paste Gemini API key..." autocomplete="off">
+                            <button class="btn btn-gold-outline" id="modal-save-key-btn">Unlock Pro</button>
+                        </div>
+                        <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.5rem; text-align:center;">
+                            Free key at <a href="https://aistudio.google.com/" target="_blank" class="gold-text">aistudio.google.com <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.6rem;"></i></a>
+                        </p>
                     </div>
                 </div>
             </div>
-            
-            <button class="btn btn-transparent" id="close-onboarding-btn" style="margin-top: 1rem; width: 100%; color: var(--text-muted); font-size: 0.8rem;">
-                I'll do this later
-            </button>
         </div>
     </div>
 
