@@ -41,7 +41,7 @@ export async function onRequestPost(context) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama3.3-70b',
+        model: 'qwen-3-235b-a22b-instruct-2507',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 2048,
         temperature: 0.7
