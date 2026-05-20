@@ -12,7 +12,7 @@ const state = {
     messages: [
         {
             role: 'assistant',
-            text: `**Midas is online.** ⚡ Running on the **free tier** (Llama 3.3 70B via Cerebras).
+            text: `**Midas is online.** ⚡ Running on the **free tier** (Qwen 3 235B via Cerebras).
 
 Ready to help you build a side hustle from real-time trends with a $100 budget.
 
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         logTerminal('Gemini Pro API key detected. Running on Pro tier.', 'success');
         updateAgentStatus('idle', 'CO-FOUNDER PRO: STANDBY');
     } else {
-        logTerminal('Free tier active — Midas powered by Cerebras Llama 3.3 70B.', 'success');
+        logTerminal('Free tier active — Midas powered by Cerebras Qwen 3 235B.', 'success');
         updateAgentStatus('idle', 'CO-FOUNDER: ONLINE (FREE)');
         if (!hasSeenOnboarding && onboardingModal) {
             onboardingModal.style.display = 'flex';
