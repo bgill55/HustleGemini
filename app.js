@@ -12,7 +12,11 @@ const state = {
     messages: [
         {
             role: 'assistant',
-            text: `**Midas (Gemini Co-founder)** is active. Ready to build a side hustle from scratch with a $100 budget.\n\nTo begin, enter your Gemini API Key in the header, then click one of the quick actions below or type a message!`
+            text: `**Midas is online.** ⚡ Running on the **free tier** (Llama 3.3 70B via Cerebras).
+
+Ready to help you build a side hustle from real-time trends with a $100 budget.
+
+Click one of the quick actions below, or type anything to get started! Upgrade to **Gemini 3 Pro** anytime by adding your API key.`
         }
     ],
     vault: {
@@ -40,14 +44,20 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const onboardingModal = document.getElementById('onboarding-modal');
     
+    // Free tier works without any API key — Cerebras runs server-side
+    // Show modal only if user explicitly visits for first time with no key
+    // (tracked via localStorage flag)
+    const hasSeenOnboarding = localStorage.getItem('hg_seen_onboarding');
     if (state.apiKey) {
-        logTerminal('Saved API key detected. Co-founder status: standby.', 'success');
-        updateAgentStatus('idle', 'CO-FOUNDER: STANDBY');
+        logTerminal('Gemini Pro API key detected. Running on Pro tier.', 'success');
+        updateAgentStatus('idle', 'CO-FOUNDER PRO: STANDBY');
     } else {
-        logTerminal('Warning: No API key configured. Please enter a key in the header.', 'warning');
-        updateAgentStatus('idle', 'API KEY REQUIRED');
-        // Show modal if no API key is present
-        if (onboardingModal) onboardingModal.style.display = 'flex';
+        logTerminal('Free tier active — Midas powered by Cerebras Llama 3.3 70B.', 'success');
+        updateAgentStatus('idle', 'CO-FOUNDER: ONLINE (FREE)');
+        if (!hasSeenOnboarding && onboardingModal) {
+            onboardingModal.style.display = 'flex';
+            localStorage.setItem('hg_seen_onboarding', 'true');
+        }
     }
     fetchGoogleTrends(); // Load real-time trends on startup
 });
@@ -764,28 +774,15 @@ function handleUserMessage(msgText) {
     state.messages.push({ role: 'user', text: msgText });
     renderChat();
 
-    // Check if key is present
-    if (!state.apiKey) {
-        logTerminal('Error: Cannot process request. Gemini API key is missing.', 'error');
-        showToast('Gemini API key is required. Paste it in the header.', 'error');
-        
-        state.messages.push({
-            role: 'assistant',
-            text: `⚠️ **Key Required:** I need your Google Gemini API key to proceed. Please paste it in the input field in the top header.\n\nYou can grab a free developer key from the [Google AI Studio Console](https://aistudio.google.com/).`
-        });
-        saveStateToLocalStorage();
-        renderChat();
-        return;
-    }
-
-    // Process using API based on trigger
+    // Process using API — free tier (Cerebras) or pro tier (Gemini)
     processAgentRequest(msgText);
 }
 
-// Process Agent request using Gemini API
+// Process Agent request — routes to free (Cerebras) or pro (Gemini) tier
 async function processAgentRequest(userMessage) {
-    updateAgentStatus('active', 'CO-FOUNDER: THINKING...');
-    logTerminal('Midas is processing instructions...', 'info');
+    const isPro = !!state.apiKey;
+    updateAgentStatus('active', isPro ? 'MIDAS PRO: THINKING...' : 'MIDAS: THINKING...');
+    logTerminal(`Midas is processing (${isPro ? 'Gemini 3 Pro' : 'Free / Cerebras'})...`, 'info');
 
     // Create assistant typing placeholder message
     const placeholderMsgIndex = state.messages.length;
@@ -903,15 +900,15 @@ async function processAgentRequest(userMessage) {
         saveStateToLocalStorage();
         renderChat();
         
-        updateAgentStatus('success', 'CO-FOUNDER: STANDBY');
+        updateAgentStatus('success', isPro ? 'CO-FOUNDER PRO: STANDBY' : 'CO-FOUNDER: ONLINE (FREE)');
         logTerminal('Co-founder response received.', 'success');
 
     } catch (error) {
         console.error(error);
-        state.messages.pop(); // Remove indicator
+        state.messages.pop();
         state.messages.push({
             role: 'assistant',
-            text: `❌ **API Connection Error:** I encountered an error communicating with Gemini. Please verify your API Key is correct and that your internet connection is active.\n\n*Error details: ${error.message}*`
+            text: `❌ **Connection Error:** ${error.message}`
         });
         saveStateToLocalStorage();
         renderChat();
@@ -920,41 +917,60 @@ async function processAgentRequest(userMessage) {
     }
 }
 
-// Call Google Gemini API — with auto-retry on 503/429 overload
+// Dual-tier AI call: FREE = Cerebras proxy, PRO = Gemini 3 Flash direct
 async function callGeminiAPI(promptText, attempt = 1) {
     const MAX_ATTEMPTS = 3;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${state.apiKey}`;
 
-    const requestBody = {
-        contents: [{ parts: [{ text: promptText }] }]
-    };
+    // ---- PRO TIER: User has a Gemini API key ----
+    if (state.apiKey) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${state.apiKey}`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+        });
 
-    const response = await fetch(url, {
+        if ((response.status === 503 || response.status === 429) && attempt < MAX_ATTEMPTS) {
+            const delayMs = attempt * 2000;
+            logTerminal(`Gemini overloaded — retrying in ${delayMs / 1000}s...`, 'warning');
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+            return callGeminiAPI(promptText, attempt + 1);
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error?.message || `Gemini HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.candidates?.[0]?.content?.parts?.[0]) {
+            return data.candidates[0].content.parts[0].text;
+        }
+        throw new Error('Invalid response structure from Gemini API.');
+    }
+
+    // ---- FREE TIER: Route through Cerebras serverless proxy ----
+    const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify({ prompt: promptText, personaMode: state.personaMode })
     });
 
-    // Auto-retry on transient overload errors
     if ((response.status === 503 || response.status === 429) && attempt < MAX_ATTEMPTS) {
-        const delayMs = attempt * 2000; // 2s, 4s
-        logTerminal(`Gemini overloaded — retrying in ${delayMs / 1000}s (attempt ${attempt}/${MAX_ATTEMPTS})...`, 'warning');
+        const delayMs = attempt * 2000;
+        logTerminal(`Free tier overloaded — retrying in ${delayMs / 1000}s...`, 'warning');
         await new Promise(resolve => setTimeout(resolve, delayMs));
         return callGeminiAPI(promptText, attempt + 1);
     }
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error ? errorData.error.message : `HTTP status ${response.status}`);
+        throw new Error(errorData.error || `Free tier error ${response.status}`);
     }
 
     const data = await response.json();
-
-    if (data.candidates && data.candidates[0]?.content?.parts?.[0]) {
-        return data.candidates[0].content.parts[0].text;
-    } else {
-        throw new Error('Invalid response structure received from Gemini API.');
-    }
+    if (!data.text) throw new Error('Empty response from free tier.');
+    return data.text;
 }
 
 
