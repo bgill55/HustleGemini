@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HustleGemeni // AI Co-founder Command Center</title>
+    <!-- Google Fonts: Space Grotesk & Orbitron for Tech Feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="glow-overlay"></div>
+    
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="logo-area">
+                <i class="fa-solid fa-microchip gold-glow"></i>
+                <div class="logo-text">
+                    <h1>HUSTLE<span>GEMENI</span></h1>
+                    <span class="tagline">AI Co-founder Command Center // v1.0</span>
+                </div>
+            </div>
+            
+            <div class="header-controls">
+                <div class="status-badge" id="agent-status">
+                    <span class="status-indicator idle"></span>
+                    <span class="status-text">CO-FOUNDER: STANDBY</span>
+                </div>
+                
+                <div class="persona-selector">
+                    <i class="fa-solid fa-user-astronaut gold-text"></i>
+                    <select id="midas-persona-select" class="glass-input" title="Select Midas Strategy Mode">
+                        <option value="bootstrapper">Mode: Bootstrapper ($0 Focus)</option>
+                        <option value="aggressive">Mode: Aggressive Scale (Paid/Fast)</option>
+                        <option value="audience">Mode: Audience-First (Organic/Brand)</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down gold-text" style="font-size: 0.7rem; margin-left: -0.2rem; pointer-events: none;"></i>
+                </div>
+                
+                <div class="api-key-container">
+                    <i class="fa-solid fa-key gold-text"></i>
+                    <input type="password" id="api-key-input" placeholder="Paste Gemini API Key..." aria-label="Gemini API Key">
+                    <button id="toggle-api-visibility" title="Toggle Key Visibility">
+                        <i class="fa-solid fa-eye-slash"></i>
+                    </button>
+                    <button id="show-onboarding-btn" class="get-key-link" title="How to setup Midas & Get API Key" style="background:none; border:none; padding:0; cursor:pointer;">
+                        <i class="fa-solid fa-circle-question"></i>
+                    </button>
+                </div>
+                
+                <button id="export-plan-btn" class="btn btn-gold-outline" title="Export Action Plan & Vault to Markdown" style="margin-right: 0.5rem;">
+                    <i class="fa-solid fa-download"></i> Export
+                </button>
+                <button id="reset-data-btn" class="btn btn-danger-outline" title="Clear all local data">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <main class="dashboard-grid">
+            
+            <!-- LEFT PANEL: CHAT CONSOLE -->
+            <section class="console-panel chat-console">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-comments gold-text"></i> CO-FOUNDER CONSOLE</h2>
+                    <span class="panel-subtitle">Collaborate in real-time</span>
+                </div>
+                
+                <div class="chat-messages-container" id="chat-messages">
+                    <!-- Intro Message -->
+                    <div class="message assistant">
+                        <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+                        <div class="message-content">
+                            <p>**Midas (Gemini Co-founder)** is active. Ready to build a side hustle from scratch with a $100 budget.</p>
+                            <p>To begin, enter your Gemini API Key in the header, then click one of the quick actions below or type a message!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-prompts">
+                    <button class="quick-prompt-btn" data-prompt="Let's brainstorm 3 unique, zero-cost side hustles that we can launch in 48 hours using Gemini API.">
+                        <i class="fa-solid fa-lightbulb"></i> Brainstorm Hustles
+                    </button>
+                    <button class="quick-prompt-btn" data-prompt="Analyze our active hustle. Create a detailed step-by-step action plan split into: Setup, Launch, and Scale.">
+                        <i class="fa-solid fa-list-check"></i> Generate Action Plan
+                    </button>
+                    <button class="quick-prompt-btn" data-prompt="Draft the marketing strategy and copy for our landing page. Include a compelling tagline, value proposition, and hero text.">
+                        <i class="fa-solid fa-bullhorn"></i> Draft Landing Copy
+                    </button>
+                    <button class="quick-prompt-btn" data-prompt="Help me brainstorm name ideas and a tagline for our active side hustle.">
+                        <i class="fa-solid fa-signature"></i> Name & Slogan
+                    </button>
+                </div>
+                
+                <form class="chat-input-form" id="chat-form">
+                    <input type="text" id="chat-input" placeholder="Give an instruction or chat with Midas..." autocomplete="off" required>
+                    <button type="submit" class="btn btn-gold" id="send-btn">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </section>
+
+            <!-- RIGHT PANEL: WORKSPACE -->
+            <section class="console-panel workspace-console">
+                
+                <!-- Workspace Tabs -->
+                <nav class="workspace-tabs">
+                    <button class="tab-btn active" data-tab="overview">
+                        <i class="fa-solid fa-chart-line"></i> Overview
+                    </button>
+                    <button class="tab-btn" data-tab="ideas">
+                        <i class="fa-solid fa-brain"></i> Niche Ideas
+                    </button>
+                    <button class="tab-btn" data-tab="action-plan">
+                        <i class="fa-solid fa-clipboard-list"></i> Action Plan
+                    </button>
+                    <button class="tab-btn" data-tab="finances" id="tab-btn-finances">
+                        <i class="fa-solid fa-wallet"></i> Budget ($100)
+                    </button>
+                    <button class="tab-btn" data-tab="vault">
+                        <i class="fa-solid fa-box-archive"></i> Resource Vault
+                    </button>
+                </nav>
+
+                <!-- TAB CONTENT AREA -->
+                <div class="tab-content-container">
+                    
+                    <!-- TAB 1: OVERVIEW -->
+                    <div class="tab-content active" id="tab-overview">
+                        <div class="overview-grid">
+                            <!-- Active Project Status Card -->
+                            <div class="dashboard-card project-summary-card">
+                                <h3>ACTIVE SIDE HUSTLE</h3>
+                                <div class="project-details" id="active-project-details">
+                                    <div class="no-active-project">
+                                        <i class="fa-solid fa-folder-open large-icon"></i>
+                                        <p>No active side hustle selected yet.</p>
+                                        <p class="subtext">Select an idea from the "Niche Ideas" tab or tell Midas to choose one.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Financial Progress Card -->
+                            <div class="dashboard-card mini-finance-card">
+                                <h3>BUDGET SUMMARY</h3>
+                                <div class="finance-progress-container">
+                                    <div class="progress-info">
+                                        <span>Spent: <strong id="overview-spent">$0.00</strong></span>
+                                        <span>Remaining: <strong id="overview-remaining" class="gold-text">$100.00</strong></span>
+                                    </div>
+                                    <div class="progress-bar-wrapper">
+                                        <div class="progress-bar-fill" id="overview-progress-fill" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                                <div class="quick-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Initial</span>
+                                        <span class="stat-value editable-stat" id="overview-initial-budget" contenteditable="true" title="Click to edit">$100.00</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Target Revenue</span>
+                                        <span class="stat-value gold-text editable-stat" id="overview-target-revenue" contenteditable="true" title="Click to edit">$20,000</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Agent Terminal Thought Log -->
+                            <div class="dashboard-card terminal-card">
+                                <h3>AGENT PROCESS LOG</h3>
+                                <div class="terminal-body" id="terminal-body">
+                                    <div class="terminal-line"><span class="timestamp">[07:00:00]</span> <span class="log-info">System initialized. Waiting for user input...</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: NICHE IDEAS -->
+                    <div class="tab-content" id="tab-ideas">
+                        <!-- Real-time Google Trends -->
+                        <div class="trends-section">
+                            <div class="section-actions" style="margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255, 215, 0, 0.1);">
+                                <h3>🔥 REAL-TIME GOOGLE TRENDS</h3>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <select id="trends-geo-select" class="glass-input" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 4px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,215,0,0.15); color: var(--text-primary); cursor: pointer; font-family: var(--font-body);">
+                                        <option value="US">United States</option>
+                                        <option value="GB">United Kingdom</option>
+                                        <option value="CA">Canada</option>
+                                        <option value="AU">Australia</option>
+                                        <option value="IN">India</option>
+                                    </select>
+                                    <button class="btn btn-gold-outline btn-sm" id="refresh-trends-btn" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                                </div>
+                            </div>
+                            <div class="trends-grid" id="trends-grid">
+                                <!-- Loaded dynamically -->
+                                <div class="trend-loader">
+                                    <i class="fa-solid fa-spinner fa-spin gold-text"></i>
+                                    <span>Retrieving latest spiking trends...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ideas-section" style="margin-top: 2rem; border-top: 1px dashed rgba(255, 215, 0, 0.15); padding-top: 1.5rem;">
+                            <div class="section-actions">
+                                <h3>GENERATED NICHE OPPORTUNITIES</h3>
+                                <button class="btn btn-gold-outline btn-sm" id="clear-ideas-btn">Clear Ideas</button>
+                            </div>
+                            <div class="ideas-grid" id="ideas-grid">
+                                <!-- Ideas populated here dynamically -->
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-lightbulb large-icon"></i>
+                                    <p>No ideas generated yet.</p>
+                                    <button class="btn btn-gold btn-sm init-ideas-btn">Brainstorm Ideas Now</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: ACTION PLAN -->
+                    <div class="tab-content" id="tab-action-plan">
+                        <div class="action-plan-section">
+                            <div class="section-actions">
+                                <h3>PROJECT TASK LIST</h3>
+                                <div class="button-group">
+                                    <button class="btn btn-gold-outline btn-sm" id="clear-tasks-btn">Clear All</button>
+                                    <button class="btn btn-gold btn-sm" id="add-task-btn"><i class="fa-solid fa-plus"></i> Add Task</button>
+                                </div>
+                            </div>
+
+                            <!-- Task Add Form Modal/Inline -->
+                            <div class="add-task-form-wrapper" id="add-task-form-wrapper" style="display: none;">
+                                <div class="add-task-form glass-card">
+                                    <input type="text" id="new-task-title" placeholder="Task description..." required>
+                                    <select id="new-task-stage">
+                                        <option value="setup">Setup (Phase 1)</option>
+                                        <option value="launch">Launch (Phase 2)</option>
+                                        <option value="scale">Scale (Phase 3)</option>
+                                    </select>
+                                    <button class="btn btn-gold btn-sm" id="submit-new-task">Add</button>
+                                    <button class="btn btn-danger-outline btn-sm" id="cancel-new-task">Cancel</button>
+                                </div>
+                            </div>
+
+                            <div class="action-phases">
+                                <!-- Phase 1: Setup -->
+                                <div class="phase-panel">
+                                    <h4 class="phase-header"><i class="fa-solid fa-wrench gold-text"></i> PHASE 1: SETUP</h4>
+                                    <ul class="task-list" id="task-list-setup">
+                                        <!-- Tasks dynamic -->
+                                        <li class="empty-task-message">No setup tasks. Generates automatically when you build an action plan.</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Phase 2: Launch -->
+                                <div class="phase-panel">
+                                    <h4 class="phase-header"><i class="fa-solid fa-rocket gold-text"></i> PHASE 2: LAUNCH</h4>
+                                    <ul class="task-list" id="task-list-launch">
+                                        <li class="empty-task-message">No launch tasks.</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Phase 3: Scale -->
+                                <div class="phase-panel">
+                                    <h4 class="phase-header"><i class="fa-solid fa-arrow-up-right-dots gold-text"></i> PHASE 3: SCALE</h4>
+                                    <ul class="task-list" id="task-list-scale">
+                                        <li class="empty-task-message">No scaling tasks.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: FINANCES -->
+                    <div class="tab-content" id="tab-finances">
+                        <div class="finances-section">
+                            <div class="section-actions">
+                                <h3 id="finance-heading">EXPENSE LOGGING ($100 STARTING BUDGET)</h3>
+                                <button class="btn btn-gold btn-sm" id="log-expense-btn"><i class="fa-solid fa-plus"></i> Log Expense</button>
+                            </div>
+
+                            <!-- Expense Entry Form -->
+                            <div class="add-expense-form-wrapper" id="add-expense-form-wrapper" style="display: none;">
+                                <div class="add-expense-form glass-card">
+                                    <input type="text" id="expense-item" placeholder="e.g. Domain Name Registration" required>
+                                    <input type="number" id="expense-amount" placeholder="Amount (e.g. 10.00)" step="0.01" min="0.01" required>
+                                    <input type="text" id="expense-category" placeholder="Category (e.g. Marketing, Setup)" required>
+                                    <button class="btn btn-gold btn-sm" id="submit-new-expense">Log</button>
+                                    <button class="btn btn-danger-outline btn-sm" id="cancel-new-expense">Cancel</button>
+                                </div>
+                            </div>
+
+                            <!-- Budget Visualization Card -->
+                            <div class="finance-detailed-dashboard">
+                                <div class="finance-widget text-center">
+                                    <span class="widget-label">STARTING</span>
+                                    <span class="widget-value editable-stat" id="finance-initial-budget" contenteditable="true" title="Click to edit">$100.00</span>
+                                </div>
+                                <div class="finance-widget text-center">
+                                    <span class="widget-label">SPENT</span>
+                                    <span class="widget-value spent-text" id="finance-total-spent">$0.00</span>
+                                </div>
+                                <div class="finance-widget text-center">
+                                    <span class="widget-label">REMAINING BALANCE</span>
+                                    <span class="widget-value gold-text gold-glow-text" id="finance-total-remaining">$100.00</span>
+                                </div>
+                            </div>
+
+                            <div class="expense-table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Category</th>
+                                            <th>Amount</th>
+                                            <th style="width: 60px;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="expense-table-body">
+                                        <!-- Dynamically generated rows -->
+                                        <tr class="empty-table-row">
+                                            <td colspan="5" class="text-center">No expenses logged yet. Try staying close to zero!</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 5: VAULT -->
+                    <div class="tab-content" id="tab-vault">
+                        <div class="vault-section">
+                            <div class="section-actions">
+                                <h3>RESOURCE VAULT</h3>
+                                <button class="btn btn-gold-outline btn-sm" id="clear-vault-btn">Clear Vault</button>
+                            </div>
+                            
+                            <div class="vault-grid">
+                                <!-- Vault Item 1: Copywriting -->
+                                <div class="vault-card glass-card">
+                                    <div class="vault-card-header">
+                                        <h4><i class="fa-solid fa-file-lines gold-text"></i> Landing Page Copy</h4>
+                                        <button class="copy-vault-content-btn btn-sm-icon" data-target="copy-content" title="Copy Content"><i class="fa-solid fa-copy"></i></button>
+                                    </div>
+                                    <div class="vault-card-body" id="vault-landing-copy">
+                                        <p class="empty-vault-text">Landing copy will appear here once generated.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Vault Item 2: Target Persona -->
+                                <div class="vault-card glass-card">
+                                    <div class="vault-card-header">
+                                        <h4><i class="fa-solid fa-user-gear gold-text"></i> Target Buyer Persona</h4>
+                                        <button class="copy-vault-content-btn btn-sm-icon" data-target="persona-content" title="Copy Content"><i class="fa-solid fa-copy"></i></button>
+                                    </div>
+                                    <div class="vault-card-body" id="vault-buyer-persona">
+                                        <p class="empty-vault-text">Target persona analysis will appear here once generated.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Vault Item 3: SWOT & Market Analysis -->
+                                <div class="vault-card glass-card full-width-vault">
+                                    <div class="vault-card-header">
+                                        <h4><i class="fa-solid fa-chart-pie gold-text"></i> Business Model & SWOT Analysis</h4>
+                                        <button class="copy-vault-content-btn btn-sm-icon" data-target="swot-content" title="Copy Content"><i class="fa-solid fa-copy"></i></button>
+                                    </div>
+                                    <div class="vault-card-body" id="vault-business-swot">
+                                        <p class="empty-vault-text">Business SWOT analysis will appear here once generated.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Onboarding Modal -->
+    <div class="onboarding-modal-overlay" id="onboarding-modal" style="display: none;">
+        <div class="onboarding-modal-content glass-card">
+            <div class="onboarding-header">
+                <i class="fa-solid fa-microchip gold-glow" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                <h2>Welcome to HUSTLE<span class="gold-text">GEMINI</span></h2>
+                <p>Your AI Co-founder Command Center.</p>
+            </div>
+            
+            <div class="onboarding-body">
+                <p>Midas is an AI agent that helps you brainstorm, plan, and execute profitable side hustles from scratch using real-time trends.</p>
+                
+                <div class="api-key-setup-box">
+                    <h3><i class="fa-solid fa-key"></i> Connect Your Co-founder</h3>
+                    <p>To wake up Midas, you need a free Google Gemini API key.</p>
+                    
+                    <ol class="setup-steps">
+                        <li>Go to <a href="https://aistudio.google.com/" target="_blank" class="gold-text">Google AI Studio <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.7rem;"></i></a></li>
+                        <li>Click <strong>"Get API Key"</strong> and create a new key.</li>
+                        <li>Paste your key below to initialize the system.</li>
+                    </ol>
+                    
+                    <div class="modal-input-group">
+                        <input type="password" id="modal-api-key-input" placeholder="AIzaSy..." autocomplete="off">
+                        <button class="btn btn-gold" id="modal-save-key-btn">Initialize System</button>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn btn-transparent" id="close-onboarding-btn" style="margin-top: 1rem; width: 100%; color: var(--text-muted); font-size: 0.8rem;">
+                I'll do this later
+            </button>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

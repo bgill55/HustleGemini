@@ -1,0 +1,15 @@
+{
+  "name": "hustlegemini",
+  "version": "1.0.0",
+  "description": "HustleGemini - AI Co-Founder Dashboard powered by Midas",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx wrangler pages dev . --port=8789"
+  },
+  "keywords": ["ai", "side-hustle", "gemini", "midas"],
+  "author": "bgill55",
+  "license": "ISC",
+  "devDependencies": {
+    "wrangler": "^4.67.1"
+  }
+}
