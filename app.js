@@ -1214,7 +1214,7 @@ async function fetchGoogleTrends(forceRefresh = false) {
     grid.innerHTML = `
         <div class="trend-loader">
             <i class="fa-solid fa-spinner fa-spin gold-text"></i>
-            <span>Fetching real-time trends for ${state.trendsGeo}...</span>
+            <span>Fetching real-time feeds from Product Hunt & Reddit...</span>
         </div>
     `;
 
@@ -1224,28 +1224,41 @@ async function fetchGoogleTrends(forceRefresh = false) {
             throw new Error(`API returned status ${response.status}`);
         }
         const data = await response.json();
-        let trends = data.trends || [];
+        const rawFeeds = data.feeds || [];
 
-        // If API key is available, use Midas to enrich with hustle scores + angles
-        if (state.apiKey && trends.length > 0) {
+        // Check if we can run AI synthesis (either we have user key OR the free Cerebras proxy is available)
+        // Note: Cerebras is always available unless the server environment variable is missing.
+        const canSynthesize = true; 
+
+        if (canSynthesize && rawFeeds.length > 0) {
             grid.innerHTML = `
                 <div class="trend-loader">
-                    <i class="fa-solid fa-spinner fa-spin gold-text"></i>
-                    <span>Midas is scoring hustle opportunities...</span>
+                    <i class="fa-solid fa-brain fa-beat gold-text" style="font-size: 1.25rem; margin-bottom: 0.5rem;"></i>
+                    <span>Midas is synthesizing actionable side hustles from feeds...</span>
                 </div>
             `;
-            trends = await enrichTrendsWithAI(trends);
+            try {
+                state.trends = await synthesizeHustlesWithAI(rawFeeds);
+                state.isSynthesized = true;
+            } catch (err) {
+                console.warn('AI trends synthesis failed, showing raw feeds:', err);
+                logTerminal('AI synthesis unavailable — showing raw market feeds.', 'warning');
+                state.trends = rawFeeds;
+                state.isSynthesized = false;
+            }
+        } else {
+            state.trends = rawFeeds;
+            state.isSynthesized = false;
         }
 
-        state.trends = trends;
         state.trendsLastFetched = Date.now();
         renderGoogleTrends();
     } catch (err) {
-        console.error('Failed to fetch Google Trends:', err);
+        console.error('Failed to fetch trends:', err);
         grid.innerHTML = `
             <div class="trend-loader">
                 <i class="fa-solid fa-triangle-exclamation" style="color: var(--danger);"></i>
-                <span style="color: var(--danger);">Failed to fetch real-time trends.</span>
+                <span style="color: var(--danger);">Failed to fetch market feeds.</span>
                 <button class="btn btn-gold-outline btn-sm" id="retry-trends-btn" style="margin-top: 0.5rem; font-size: 0.7rem; padding: 2px 8px;">Retry</button>
             </div>
         `;
@@ -1253,103 +1266,45 @@ async function fetchGoogleTrends(forceRefresh = false) {
         const retryBtn = document.getElementById('retry-trends-btn');
         if (retryBtn) {
             retryBtn.addEventListener('click', () => {
-                fetchGoogleTrends();
+                fetchGoogleTrends(true);
             });
         }
         
-        logTerminal(`Error: Failed to fetch Google Trends: ${err.message}`, 'error');
+        logTerminal(`Error: Failed to fetch market feeds: ${err.message}`, 'error');
     }
 }
 
-// Use Gemini to enrich trends with hustle score + angle (no filtering — all trends kept)
-async function enrichTrendsWithAI(trends) {
-    try {
-        const trendList = trends.map((t, i) => `${i + 1}. "${t.title}" (${t.traffic} searches)`).join('\n');
+// Call AI (via callGeminiAPI) to synthesize raw feeds into side hustles
+async function synthesizeHustlesWithAI(feeds) {
+    const feedText = feeds.map((f, i) => `${i + 1}. [${f.source}] "${f.title}" - ${f.description || ''}`).join('\n');
 
-        const prompt = `You are Midas, an expert side hustle analyst. Below are trending Google searches right now.
+    const prompt = `You are Midas, a startup incubator analyst and expert side hustle co-founder.
+Below is a list of trending launches (Product Hunt) and startup discussions (Reddit) today.
 
-For EACH trend, provide:
-- hustle_score: integer 1-5 (5 = strong commercial opportunity with clear monetization, 1 = pure news/no hustle angle)
-- hustle_angle: one punchy sentence describing the most actionable way to monetize this trend as a solo hustler
+Analyze this list and extract/synthesize exactly 6 highly actionable, zero-cost side hustle concepts that can be launched in 48 hours with a $100 starting budget.
 
-Even news/sports trends can have angles (e.g. a trending athlete = sports merch, a political event = opinion newsletter).
+For EACH concept, provide:
+- title: A specific, descriptive business name or service name (e.g. "Google Maps SEO Optimizer", "AI Shorts Voiceover Service")
+- description: A detailed 2-3 sentence explanation of the specific micro-niche service, how it solves a customer pain point, and how to launch it using free tiers.
+- source: A short citation of which raw items it was inspired by (e.g., "Inspired by Reddit r/saas & Product Hunt MailAI")
+- difficulty: "Easy" | "Medium" | "Hard"
+- mrr: Estimated MRR potential (e.g. "$1,500/mo")
 
-Trending searches:
-${trendList}
+Raw Market Context:
+${feedText}
 
-Return ONLY a JSON array with one object per trend, in the same order as the input. Format:
-[
-  { "score": 4, "angle": "Create an AI-generated newsletter covering this topic and monetize via Substack" },
-  ...
-]
-No explanation. Just the JSON array.`;
+Return ONLY a JSON array containing exactly 6 objects in the format above. Do not wrap in conversational text. Return the JSON inside a \`\`\`json block.`;
 
-        // gemini-3-flash-preview — Gemini 3 Flash (latest)
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${state.apiKey}`;
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        });
-
-        if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            throw new Error(`Gemini enrichment failed (${res.status}): ${errData?.error?.message || res.statusText}`);
-        }
-
-        const data = await res.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-        // Robust multi-strategy JSON parser
-        let enrichments = [];
-        let jsonText = text.trim();
-
-        // Strip markdown code fences if present
-        if (jsonText.includes('```')) {
-            jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        }
-
-        // Strategy 1: direct parse
-        try {
-            enrichments = JSON.parse(jsonText);
-        } catch (_) {
-            // Strategy 2: greedy extraction of the outermost [ ... ]
-            const match = jsonText.match(/\[[\s\S]*\]/);
-            if (match) {
-                try {
-                    enrichments = JSON.parse(match[0]);
-                } catch (e2) {
-                    console.warn('Trend enrichment JSON parse failed. Raw response:', text);
-                    throw new Error('Could not parse Gemini JSON response');
-                }
-            } else {
-                console.warn('Trend enrichment: no JSON array found. Raw response:', text);
-                throw new Error('No JSON array in Gemini response');
-            }
-        }
-
-        // Merge enrichments back into trends
-        const enriched = trends.map((t, i) => ({
-            ...t,
-            hustleScore: enrichments[i]?.score || 0,
-            hustleAngle: enrichments[i]?.angle || ''
-        }));
-
-        // Sort by hustle score descending
-        enriched.sort((a, b) => b.hustleScore - a.hustleScore);
-
-        const topScore = enriched[0]?.hustleScore || 0;
-        logTerminal(`Midas scored ${enriched.length} trends. Top hustle score: ${topScore}/5.`, 'success');
-        return enriched;
-
-    } catch (err) {
-        console.warn('AI trend enrichment failed, showing raw trends:', err);
-        logTerminal('Trend scoring unavailable — showing raw trends.', 'warning');
-        return trends;
+    const responseText = await callGeminiAPI(prompt);
+    const parsed = parseJSONFromText(responseText);
+    if (parsed && Array.isArray(parsed)) {
+        logTerminal(`Midas successfully synthesized 6 active side hustle opportunities.`, 'success');
+        return parsed;
     }
+    throw new Error('Could not parse synthesized hustle opportunities JSON.');
 }
 
-// Render Google Trends List
+// Render the Trends Grid (can be synthesized AI hustles or raw feeds)
 function renderGoogleTrends() {
     const grid = document.getElementById('trends-grid');
     if (!grid) return;
@@ -1359,62 +1314,76 @@ function renderGoogleTrends() {
     if (!state.trends || state.trends.length === 0) {
         grid.innerHTML = `
             <div class="trend-loader">
-                <p>No trending searches found for this region.</p>
+                <p>No active trends or feeds found.</p>
             </div>
         `;
         return;
     }
 
-    state.trends.forEach(trend => {
+    state.trends.forEach(item => {
         const card = document.createElement('div');
         card.className = 'trend-card';
 
-        // Build hustle score stars
-        const score = trend.hustleScore || 0;
-        const scoreStars = score > 0
-            ? Array.from({ length: 5 }, (_, i) => {
-                const filled = i < score;
-                const color = score >= 4 ? 'var(--gold)' : score === 3 ? '#aaa' : '#555';
-                return `<i class="fa-${filled ? 'solid' : 'regular'} fa-star" style="color: ${filled ? color : '#333'}; font-size: 0.6rem;"></i>`;
-              }).join('')
-            : '';
+        if (state.isSynthesized) {
+            // Render Synthesized Side Hustles
+            const difficultyClass = item.difficulty ? item.difficulty.toLowerCase() : 'medium';
+            card.innerHTML = `
+                <div class="trend-header" style="flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+                    <span class="trend-title" style="white-space: normal; overflow: visible; text-overflow: clip; font-size: 0.85rem;" title="${item.title}">${item.title}</span>
+                    <div style="display: flex; gap: 0.35rem; align-items: center; margin-top: 0.15rem;">
+                        <span class="badge badge-difficulty-${difficultyClass}" style="font-size: 0.55rem; padding: 1px 4px;">${item.difficulty}</span>
+                        <span class="badge badge-mrr" style="font-size: 0.55rem; padding: 1px 4px;">${item.mrr}</span>
+                    </div>
+                </div>
+                <div class="trend-desc" style="height: auto; -webkit-line-clamp: unset; font-size: 0.72rem; margin-top: 0.25rem;" title="${item.description}">${item.description}</div>
+                <div style="font-size: 0.6rem; color: var(--text-muted); margin-top: 0.25rem; font-style: italic;">
+                    ${item.source}
+                </div>
+                <div class="trend-actions" style="margin-top: 0.5rem;">
+                    <button class="btn btn-gold btn-xs generate-trend-hustle-btn" style="padding: 2px 6px; font-size: 0.65rem;" data-trend="${item.title}" data-desc="${item.description}">
+                        <i class="fa-solid fa-bolt"></i> Brainstorm Hustle
+                    </button>
+                </div>
+            `;
+            
+            card.querySelector('.generate-trend-hustle-btn').addEventListener('click', (e) => {
+                const title = e.currentTarget.getAttribute('data-trend');
+                const desc = e.currentTarget.getAttribute('data-desc');
+                const prompt = `Let's brainstorm a side hustle specifically targeting the synthesized opportunity: "${title}". Description: "${desc}". Generate 3 unique, actionable ideas and outline how we can tap into this interest with a budget of $${state.initialBudget}.`;
+                handleUserMessage(prompt);
+                logTerminal(`Operator requested detailed brainstorm for synthesized concept: "${title}"`, 'info');
+            });
+        } else {
+            // Render Raw Feed Items
+            const sourceClass = item.source.toLowerCase().includes('reddit') ? 'badge-difficulty-hard' : 'badge-mrr';
+            card.innerHTML = `
+                <div class="trend-header">
+                    <span class="trend-title" title="${item.title}">${item.title}</span>
+                    <span class="badge ${sourceClass}" style="font-size: 0.55rem; padding: 1px 4px;">${item.source}</span>
+                </div>
+                <div class="trend-desc" title="${item.description}">${item.description}</div>
+                <div class="trend-actions">
+                    <a href="${item.link}" target="_blank" class="btn btn-gold-outline btn-xs" style="padding: 2px 6px; font-size: 0.65rem; text-decoration: none;">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> View Source
+                    </a>
+                    <button class="btn btn-gold btn-xs generate-trend-hustle-btn" style="padding: 2px 6px; font-size: 0.65rem; margin-left: 0.25rem;" data-trend="${item.title}">
+                        <i class="fa-solid fa-bolt"></i> Brainstorm Hustle
+                    </button>
+                </div>
+            `;
 
-        const angleText = trend.hustleAngle || trend.description || 'Spiking search query — click to brainstorm a hustle angle.';
-
-        const scoreBadgeColor = score >= 4 ? 'var(--gold)' : score === 3 ? 'rgba(180,180,180,0.7)' : 'rgba(100,100,100,0.6)';
-        const scoreBadgeBg = score >= 4 ? 'rgba(255,215,0,0.12)' : 'rgba(255,255,255,0.05)';
-
-        card.innerHTML = `
-            <div class="trend-header">
-                <span class="trend-title" title="${trend.title}">${trend.title}</span>
-                <span class="trend-traffic"><i class="fa-solid fa-arrow-trend-up"></i> ${trend.traffic}</span>
-            </div>
-            ${score > 0 ? `
-            <div style="display:flex; align-items:center; gap:0.4rem; margin: 0.2rem 0;">
-                <span style="font-size:0.6rem; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Hustle Score</span>
-                <span style="display:flex; gap:2px;">${scoreStars}</span>
-                <span style="font-size:0.6rem; font-weight:700; color:${scoreBadgeColor}; background:${scoreBadgeBg}; padding:1px 5px; border-radius:3px; border:1px solid ${scoreBadgeColor};">${score}/5</span>
-            </div>` : ''}
-            <div class="trend-desc" title="${angleText}">${angleText}</div>
-            <div class="trend-actions">
-                <button class="btn btn-gold btn-xs generate-trend-hustle-btn" style="padding: 2px 6px; font-size: 0.65rem;" data-trend="${trend.title}" data-angle="${angleText}">
-                    <i class="fa-solid fa-bolt"></i> Brainstorm Hustle
-                </button>
-            </div>
-        `;
-
-        // Event listener for the Brainstorm button — passes the angle as context
-        card.querySelector('.generate-trend-hustle-btn').addEventListener('click', (e) => {
-            const trendName = e.currentTarget.getAttribute('data-trend');
-            const angle = e.currentTarget.getAttribute('data-angle');
-            const prompt = `Let's brainstorm a side hustle specifically targeting the spiking real-time Google Trend: "${trendName}". Midas's initial hustle angle: "${angle}". Generate 3 unique, actionable ideas and outline how we can tap into this interest with a budget of $${state.initialBudget}.`;
-            handleUserMessage(prompt);
-            logTerminal(`Operator requested real-time niche generation for trend: "${trendName}" (score: ${score}/5)`, 'info');
-        });
+            card.querySelector('.generate-trend-hustle-btn').addEventListener('click', (e) => {
+                const trendName = e.currentTarget.getAttribute('data-trend');
+                const prompt = `Let's brainstorm a side hustle specifically targeting the trending market query: "${trendName}". Generate 3 unique, actionable ideas and outline how we can tap into this interest with a budget of $${state.initialBudget}.`;
+                handleUserMessage(prompt);
+                logTerminal(`Operator requested niche generation for raw feed item: "${trendName}"`, 'info');
+            });
+        }
 
         grid.appendChild(card);
     });
 }
+
 
 // ==========================================
 // Export Business Plan Feature
