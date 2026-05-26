@@ -438,9 +438,10 @@ body {
     gap: 0.75rem;
     background-color: var(--bg-panel);
     border-top: 1px solid var(--border-color);
+    align-items: flex-end;
 }
 
-.chat-input-form input {
+.chat-input-form textarea {
     flex: 1;
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid var(--border-color);
@@ -451,9 +452,16 @@ body {
     font-size: 0.9rem;
     outline: none;
     transition: border-color var(--transition-speed);
+    resize: none;
+    height: 42px;
+    min-height: 42px;
+    max-height: 150px;
+    line-height: 1.4;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
 
-.chat-input-form input:focus {
+.chat-input-form textarea:focus {
     border-color: var(--gold);
 }
 

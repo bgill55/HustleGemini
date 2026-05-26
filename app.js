@@ -263,6 +263,7 @@ function initEventListeners() {
         if (!userMsg) return;
 
         chatInput.value = '';
+        chatInput.style.height = 'auto'; // reset height on send
         handleUserMessage(userMsg);
     });
 
@@ -273,10 +274,30 @@ function initEventListeners() {
             const chatInput = document.getElementById('chat-input');
             if (chatInput) {
                 chatInput.value = prompt;
+                chatInput.style.height = 'auto';
+                chatInput.style.height = (chatInput.scrollHeight) + 'px'; // adjust height for the multi-line prompt
                 chatInput.focus();
             }
         });
     });
+
+    // Dynamic height and enter key listeners for textarea
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) {
+        // Auto-grow textarea on text input
+        chatInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Submit form on Enter, add newline on Shift+Enter
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault(); // prevent default newline insertion
+                chatForm.dispatchEvent(new Event('submit')); // trigger submit
+            }
+        });
+    }
 
     // Workspace tab switching
     document.querySelectorAll('.tab-btn').forEach(tabBtn => {
