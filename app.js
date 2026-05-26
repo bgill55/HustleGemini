@@ -1,5 +1,5 @@
 /* ==========================================
-   HustleGemeni: Frontend Core JavaScript Engine
+   Midias AI: Frontend Core JavaScript Engine
    ========================================== */
 
 // State Object
@@ -12,7 +12,7 @@ const state = {
     messages: [
         {
             role: 'assistant',
-            text: `**Midas is online.** ⚡ Running on the **free tier** (Qwen 3 235B via Cerebras).
+            text: `**Midias is online.** ⚡ Running on the **free tier** (Qwen 3 235B via Cerebras).
 
 Ready to help you build a side hustle from real-time trends with a $100 budget.
 
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadStateFromLocalStorage();
     initEventListeners();
     renderAll();
-    logTerminal('HustleGemeni System v1.0 initialized.', 'info');
+    logTerminal('Midias AI System v1.0 initialized.', 'info');
     
     const onboardingModal = document.getElementById('onboarding-modal');
     
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         logTerminal('Gemini Pro API key detected. Running on Pro tier.', 'success');
         updateAgentStatus('idle', 'CO-FOUNDER PRO: STANDBY');
     } else {
-        logTerminal('Free tier active — Midas powered by Cerebras Qwen 3 235B.', 'success');
+        logTerminal('Free tier active — Midias powered by Cerebras Qwen 3 235B.', 'success');
         updateAgentStatus('idle', 'CO-FOUNDER: ONLINE (FREE)');
         if (!hasSeenOnboarding && onboardingModal) {
             onboardingModal.style.display = 'flex';
@@ -118,7 +118,7 @@ function loadStateFromLocalStorage() {
     const savedPersona = localStorage.getItem('hg_persona');
     if (savedPersona) {
         state.personaMode = savedPersona;
-        const selector = document.getElementById('midas-persona-select');
+        const selector = document.getElementById('midias-persona-select');
         if (selector) selector.value = savedPersona;
     }
 
@@ -150,7 +150,7 @@ function initEventListeners() {
     const toggleApiBtn = document.getElementById('toggle-api-visibility');
     const resetDataBtn = document.getElementById('reset-data-btn');
     const exportPlanBtn = document.getElementById('export-plan-btn');
-    const personaSelect = document.getElementById('midas-persona-select');
+    const personaSelect = document.getElementById('midias-persona-select');
     
     // Modal elements
     const onboardingModal = document.getElementById('onboarding-modal');
@@ -177,7 +177,7 @@ function initEventListeners() {
         personaSelect.addEventListener('change', (e) => {
             state.personaMode = e.target.value;
             saveStateToLocalStorage();
-            logTerminal(`Midas Strategy Mode updated to: ${state.personaMode.toUpperCase()}`, 'info');
+            logTerminal(`Midias Strategy Mode updated to: ${state.personaMode.toUpperCase()}`, 'info');
         });
     }
 
@@ -190,7 +190,7 @@ function initEventListeners() {
                 apiKeyInput.value = key; // update header input too
                 saveStateToLocalStorage();
                 onboardingModal.style.display = 'none';
-                showToast('API Key verified. Midas is online.', 'success');
+                showToast('API Key verified. Midias is online.', 'success');
                 logTerminal('API Key entered via Onboarding Modal. System ready.', 'success');
                 updateAgentStatus('idle', 'CO-FOUNDER: STANDBY');
                 
@@ -242,7 +242,7 @@ function initEventListeners() {
             state.messages = [
                 {
                     role: 'assistant',
-                    text: `**Midas (Gemini Co-founder)** is active. Ready to build a side hustle from scratch with a $100 budget.\n\nTo begin, enter your Gemini API Key in the header, then click one of the quick actions below or type a message!`
+                    text: `**Midias (AI Co-founder)** is active. Ready to build a side hustle from scratch with a $100 budget.\n\nTo begin, enter your Gemini API Key in the header, then click one of the quick actions below or type a message!`
                 }
             ];
             state.vault = { copy: '', persona: '', swot: '' };
@@ -541,7 +541,7 @@ function renderOverview() {
             <div class="no-active-project">
                 <i class="fa-solid fa-folder-open large-icon"></i>
                 <p>No active side hustle selected yet.</p>
-                <p class="subtext">Select an idea from the "Niche Ideas" tab or tell Midas to choose one.</p>
+                <p class="subtext">Select an idea from the "Niche Ideas" tab or tell Midias to choose one.</p>
             </div>
         `;
     }
@@ -629,7 +629,7 @@ function renderNicheIdeas() {
             <div class="empty-state" style="grid-column: 1 / -1;">
                 <i class="fa-solid fa-lightbulb large-icon"></i>
                 <p>No ideas brainstormed yet.</p>
-                <p class="subtext">Configure your API key and click "Brainstorm Hustles" to generate concepts with Midas.</p>
+                <p class="subtext">Configure your API key and click "Brainstorm Hustles" to generate concepts with Midias.</p>
                 <button class="btn btn-gold btn-sm init-ideas-btn">Brainstorm Ideas Now</button>
             </div>
         `;
@@ -687,7 +687,7 @@ function renderTasks() {
         }
     };
 
-    populate(setupList, setupTasks, 'No setup tasks. Let Midas build an action plan for you.');
+    populate(setupList, setupTasks, 'No setup tasks. Let Midias build an action plan for you.');
     populate(launchList, launchTasks, 'No launch tasks.');
     populate(scaleList, scaleTasks, 'No scaling tasks.');
 }
@@ -781,8 +781,8 @@ function handleUserMessage(msgText) {
 // Process Agent request — routes to free (Cerebras) or pro (Gemini) tier
 async function processAgentRequest(userMessage) {
     const isPro = !!state.apiKey;
-    updateAgentStatus('active', isPro ? 'MIDAS PRO: THINKING...' : 'MIDAS: THINKING...');
-    logTerminal(`Midas is processing (${isPro ? 'Gemini 3 Pro' : 'Free / Cerebras'})...`, 'info');
+    updateAgentStatus('active', isPro ? 'MIDIAS PRO: THINKING...' : 'MIDIAS: THINKING...');
+    logTerminal(`Midias is processing (${isPro ? 'Gemini 3 Pro' : 'Free / Cerebras'})...`, 'info');
 
     // Create assistant typing placeholder message
     const placeholderMsgIndex = state.messages.length;
@@ -826,7 +826,7 @@ async function processAgentRequest(userMessage) {
         // Construct full conversation context for Gemini API
         // Send last 8 messages for context to conserve token limits on free tier
         const historyContext = state.messages.slice(-8, placeholderMsgIndex).map(m => {
-            return `${m.role === 'user' ? 'User' : 'Midas'}: ${m.text}`;
+            return `${m.role === 'user' ? 'User' : 'Midias'}: ${m.text}`;
         }).join('\n');
 
         const fullPrompt = `${systemPrompt}\n\nCONVERSATION HISTORY:\n${historyContext}\n\nUSER'S LATEST INSTRUCTION:\n${userMessage}`;
@@ -1037,7 +1037,7 @@ function getGeneralSystemPrompt() {
         context = `We do not have an active side hustle selected yet. Recommend that we brainstorm side hustles.`;
     }
 
-    return `You are Midas, an active, brilliant, growth-focused AI startup co-founder. You write in a direct, proactive, and highly professional tone. You are assisting your human co-founder in creating a profitable side hustle starting with a strict $${state.initialBudget} starting budget, with the goal of hitting $${state.targetRevenue} in revenue.
+    return `You are Midias, an active, brilliant, growth-focused AI startup co-founder. You write in a direct, proactive, and highly professional tone. You are assisting your human co-founder in creating a profitable side hustle starting with a strict $${state.initialBudget} starting budget, with the goal of hitting $${state.targetRevenue} in revenue.
     
     ${getPersonaContext()}
     
@@ -1070,7 +1070,7 @@ function getPersonaContext() {
 
 // System Prompt: Brainstorm Niche Ideas
 function getBrainstormSystemPrompt() {
-    return `You are Midas, an AI startup co-founder. The user has asked you to brainstorm 3 unique, zero-cost side hustles that can be launched under 48 hours using Gemini API or low-code web templates with a budget of $${state.initialBudget}.
+    return `You are Midias, an AI startup co-founder. The user has asked you to brainstorm 3 unique, zero-cost side hustles that can be launched under 48 hours using Gemini API or low-code web templates with a budget of $${state.initialBudget}.
     
     ${getPersonaContext()}
     
@@ -1093,7 +1093,7 @@ function getBrainstormSystemPrompt() {
 
 // System Prompt: Generate Action Plan
 function getActionPlanSystemPrompt() {
-    return `You are Midas, an AI startup co-founder. The user wants you to generate an action plan and business audit for our active side hustle: "${state.activeHustle ? state.activeHustle.title : ''}".
+    return `You are Midias, an AI startup co-founder. The user wants you to generate an action plan and business audit for our active side hustle: "${state.activeHustle ? state.activeHustle.title : ''}".
     
     ${getPersonaContext()}
     
@@ -1234,7 +1234,7 @@ async function fetchGoogleTrends(forceRefresh = false) {
             grid.innerHTML = `
                 <div class="trend-loader">
                     <i class="fa-solid fa-brain fa-beat gold-text" style="font-size: 1.25rem; margin-bottom: 0.5rem;"></i>
-                    <span>Midas is synthesizing actionable side hustles from feeds...</span>
+                    <span>Midias is synthesizing actionable side hustles from feeds...</span>
                 </div>
             `;
             try {
@@ -1278,7 +1278,7 @@ async function fetchGoogleTrends(forceRefresh = false) {
 async function synthesizeHustlesWithAI(feeds) {
     const feedText = feeds.map((f, i) => `${i + 1}. [${f.source}] "${f.title}" - ${f.description || ''}`).join('\n');
 
-    const prompt = `You are Midas, a startup incubator analyst and expert side hustle co-founder.
+    const prompt = `You are Midias, a startup incubator analyst and expert side hustle co-founder.
 Below is a list of trending launches (Product Hunt) and startup discussions (Reddit) today.
 
 Analyze this list and extract/synthesize exactly 6 highly actionable, zero-cost side hustle concepts that can be launched in 48 hours with a $100 starting budget.
@@ -1298,7 +1298,7 @@ Return ONLY a JSON array containing exactly 6 objects in the format above. Do no
     const responseText = await callGeminiAPI(prompt);
     const parsed = parseJSONFromText(responseText);
     if (parsed && Array.isArray(parsed)) {
-        logTerminal(`Midas successfully synthesized 6 active side hustle opportunities.`, 'success');
+        logTerminal(`Midias successfully synthesized 6 active side hustle opportunities.`, 'success');
         return parsed;
     }
     throw new Error('Could not parse synthesized hustle opportunities JSON.');
@@ -1397,7 +1397,7 @@ function exportBusinessPlan() {
     const totalSpent = state.expenses.reduce((sum, exp) => sum + exp.amount, 0);
     const remaining = state.initialBudget - totalSpent;
 
-    let markdown = `# HUSTLEGEMINI BUSINESS PLAN\n\n`;
+    let markdown = `# MIDIAS AI BUSINESS PLAN\n\n`;
     markdown += `## EXECUTIVE SUMMARY\n`;
     markdown += `**Active Hustle:** ${state.activeHustle.title}\n`;
     markdown += `**Description:** ${state.activeHustle.description}\n\n`;
