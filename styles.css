@@ -1661,3 +1661,29 @@ tbody tr:hover {
     white-space: nowrap;
 }
 
+.badge-tier-free {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-muted);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.badge-tier-pro {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);
+}
+
+

@@ -1,6 +1,5 @@
-// Cloudflare Pages Function — FREE tier AI proxy
-// Routes to Cerebras (llama-3.3-70b) using server-side API key
-// No Gemini key required for free users
+// Cloudflare Pages Function — Dual-tier AI proxy
+// Routes to Gemini Pro for subscribed Pro users, or Cerebras for Free users
 
 export async function onRequestPost(context) {
   const corsHeaders = {
@@ -16,7 +15,7 @@ export async function onRequestPost(context) {
   }
 
   try {
-    const { prompt, personaMode } = await context.request.json();
+    const { prompt, personaMode, userId } = await context.request.json();
 
     if (!prompt) {
       return new Response(JSON.stringify({ error: 'prompt is required' }), {
@@ -25,6 +24,67 @@ export async function onRequestPost(context) {
       });
     }
 
+    const supabaseUrl = context.env.SUPABASE_URL || 'https://plrtjzuwqvkkopuruxux.supabase.co';
+    const supabaseServiceKey = context.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    let isPro = false;
+
+    // Verify subscription status in database if userId is provided
+    if (userId && supabaseServiceKey) {
+      try {
+        const userRes = await fetch(`${supabaseUrl}/rest/v1/user_states?user_id=eq.${userId}&select=is_pro`, {
+          method: 'GET',
+          headers: {
+            'apikey': supabaseServiceKey,
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          if (userData && userData.length > 0 && userData[0].is_pro) {
+            isPro = true;
+          }
+        }
+      } catch (dbErr) {
+        console.error('Failed to verify Pro status in database:', dbErr);
+      }
+    }
+
+    // ---- PRO TIER: Route through Gemini Pro ----
+    if (isPro) {
+      const geminiApiKey = context.env.GEMINI_API_KEY;
+      if (!geminiApiKey) {
+        return new Response(JSON.stringify({ error: 'Pro tier unavailable — Gemini key not configured on server.' }), {
+          status: 503,
+          headers: corsHeaders
+        });
+      }
+
+      const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiApiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      if (!geminiRes.ok) {
+        const errData = await geminiRes.json().catch(() => ({}));
+        return new Response(JSON.stringify({ error: errData?.error?.message || `Gemini error ${geminiRes.status}` }), {
+          status: geminiRes.status,
+          headers: corsHeaders
+        });
+      }
+
+      const data = await geminiRes.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      return new Response(JSON.stringify({ text }), { headers: corsHeaders });
+    }
+
+    // ---- FREE TIER: Route through Cerebras proxy ----
     const apiKey = context.env.CEREBRAS_API_KEY;
     if (!apiKey) {
       return new Response(JSON.stringify({ error: 'Free tier unavailable — server not configured.' }), {
@@ -68,3 +128,4 @@ export async function onRequestPost(context) {
     });
   }
 }
+

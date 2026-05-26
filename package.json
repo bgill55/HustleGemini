@@ -4,12 +4,20 @@
   "description": "Midias AI - AI Co-Founder Dashboard powered by Midias",
   "main": "index.html",
   "scripts": {
-    "dev": "npx wrangler pages dev . --port=8789"
+    "dev": "npx wrangler pages dev . --port=8789 --compatibility-date=2026-05-25"
   },
-  "keywords": ["ai", "side-hustle", "midias-ai", "midias"],
+  "keywords": [
+    "ai",
+    "side-hustle",
+    "midias-ai",
+    "midias"
+  ],
   "author": "bgill55",
   "license": "ISC",
   "devDependencies": {
     "wrangler": "^4.67.1"
+  },
+  "dependencies": {
+    "stripe": "^22.1.1"
   }
 }

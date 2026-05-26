@@ -29,7 +29,8 @@ Click one of the quick actions below, or type anything to get started! Upgrade t
     trends: [],
     trendsGeo: 'US',
     trendsLastFetched: 0, // epoch ms — used to throttle AI filter calls
-    personaMode: 'bootstrapper' // 'bootstrapper', 'aggressive', or 'audience'
+    personaMode: 'bootstrapper', // 'bootstrapper', 'aggressive', or 'audience'
+    isPro: false
 };
 
 // Supabase Client and Session State
@@ -46,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadStateFromLocalStorage();
     initEventListeners();
     renderAll();
+    checkPaymentStatus();
     logTerminal('Midias AI System v1.0 initialized.', 'info');
     
     const onboardingModal = document.getElementById('onboarding-modal');
@@ -54,8 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Show modal only if user explicitly visits for first time with no key
     // (tracked via localStorage flag)
     const hasSeenOnboarding = localStorage.getItem('hg_seen_onboarding');
-    if (state.apiKey) {
-        logTerminal('Gemini Pro API key detected. Running on Pro tier.', 'success');
+    const isPro = !!state.apiKey || !!state.isPro;
+    if (isPro) {
+        logTerminal('Pro tier active — Gemini Pro models unlocked.', 'success');
         updateAgentStatus('idle', 'CO-FOUNDER PRO: STANDBY');
     } else {
         logTerminal('Free tier active — Midias powered by Cerebras Qwen 3 235B.', 'success');
@@ -70,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Load state from LocalStorage
 function loadStateFromLocalStorage() {
+    state.isPro = false;
     const savedApiKey = localStorage.getItem('hg_api_key');
     if (savedApiKey) {
         state.apiKey = savedApiKey;
@@ -566,6 +570,25 @@ function initEventListeners() {
             }
         });
     }
+
+    // Stripe Billing & Paywall listeners
+    const upgradeProBtn = document.getElementById('upgrade-pro-btn');
+    if (upgradeProBtn) {
+        upgradeProBtn.addEventListener('click', handleUpgradeToPro);
+    }
+
+    const paywallUpgradeBtn = document.getElementById('paywall-upgrade-btn');
+    if (paywallUpgradeBtn) {
+        paywallUpgradeBtn.addEventListener('click', handleUpgradeToPro);
+    }
+
+    const closePaywallBtn = document.getElementById('close-paywall-btn');
+    if (closePaywallBtn) {
+        closePaywallBtn.addEventListener('click', () => {
+            const paywallModal = document.getElementById('paywall-modal');
+            if (paywallModal) paywallModal.style.display = 'none';
+        });
+    }
 }
 
 // Setup budget parameter inline edits helper
@@ -613,6 +636,31 @@ function renderAll() {
     renderFinances();
     renderVault();
     renderGoogleTrends();
+    updateTierUI();
+}
+
+function updateTierUI() {
+    const isPro = !!state.apiKey || !!state.isPro;
+    const tierBadge = document.getElementById('user-tier-badge');
+    const upgradeProBtn = document.getElementById('upgrade-pro-btn');
+    
+    if (tierBadge) {
+        if (isPro) {
+            tierBadge.className = 'badge-tier-pro';
+            tierBadge.innerText = 'PRO';
+        } else {
+            tierBadge.className = 'badge-tier-free';
+            tierBadge.innerText = 'FREE';
+        }
+    }
+    
+    if (upgradeProBtn) {
+        if (isPro) {
+            upgradeProBtn.style.display = 'none';
+        } else {
+            upgradeProBtn.style.display = 'inline-block';
+        }
+    }
 }
 
 // Render Chat Log
@@ -902,6 +950,19 @@ function renderVault() {
 
 // Send user message to UI and handle processing
 function handleUserMessage(msgText) {
+    const isPro = !!state.apiKey || !!state.isPro;
+    const userMessageCount = state.messages.filter(m => m.role === 'user').length;
+    
+    if (!isPro && userMessageCount >= 5) {
+        const paywallModal = document.getElementById('paywall-modal');
+        if (paywallModal) {
+            paywallModal.style.display = 'flex';
+        }
+        showToast('Free tier message limit reached. Please upgrade to Pro!', 'warning');
+        logTerminal('Message blocked: Free tier limit of 5 messages reached.', 'error');
+        return;
+    }
+
     // Add user message to state
     state.messages.push({ role: 'user', text: msgText });
     renderChat();
@@ -912,7 +973,7 @@ function handleUserMessage(msgText) {
 
 // Process Agent request — routes to free (Cerebras) or pro (Gemini) tier
 async function processAgentRequest(userMessage) {
-    const isPro = !!state.apiKey;
+    const isPro = !!state.apiKey || !!state.isPro;
     updateAgentStatus('active', isPro ? 'MIDIAS PRO: THINKING...' : 'MIDIAS: THINKING...');
     logTerminal(`Midias is processing (${isPro ? 'Gemini 3 Pro' : 'Free / Cerebras'})...`, 'info');
 
@@ -1081,11 +1142,15 @@ async function callGeminiAPI(promptText, attempt = 1) {
         throw new Error('Invalid response structure from Gemini API.');
     }
 
-    // ---- FREE TIER: Route through Cerebras serverless proxy ----
+    // ---- FREE TIER / PRO SUBSCRIBER: Route through serverless proxy ----
     const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: promptText, personaMode: state.personaMode })
+        body: JSON.stringify({
+            prompt: promptText,
+            personaMode: state.personaMode,
+            userId: currentUser ? currentUser.id : null
+        })
     });
 
     if ((response.status === 503 || response.status === 429) && attempt < MAX_ATTEMPTS) {
@@ -1660,6 +1725,7 @@ async function loadStateFromCloud(userId) {
         
         if (data) {
             state.apiKey = data.api_key || '';
+            state.isPro = data.is_pro || false;
             state.activeHustle = data.active_hustle || null;
             state.nicheIdeas = data.niche_ideas || [];
             state.tasks = data.tasks || [];
@@ -1725,3 +1791,66 @@ async function saveStateToCloud() {
         console.error("Cloud sync failed:", err);
     }
 }
+
+async function handleUpgradeToPro() {
+    if (!currentUser) {
+        const paywallModal = document.getElementById('paywall-modal');
+        if (paywallModal) paywallModal.style.display = 'none';
+        const authModal = document.getElementById('auth-modal');
+        if (authModal) authModal.style.display = 'flex';
+        showToast("Please sign in or create an account to upgrade to Pro.", "info");
+        logTerminal("Upgrade requested by guest. Redirecting to Authentication.", "info");
+        return;
+    }
+    
+    try {
+        logTerminal("Initiating Stripe Checkout session...", "info");
+        const response = await fetch('/api/stripe/checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: currentUser.email,
+                userId: currentUser.id,
+                origin: window.location.origin
+            })
+        });
+        
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.error || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (data.url) {
+            logTerminal("Checkout session created. Redirecting to Stripe...", "success");
+            window.location.href = data.url;
+        } else {
+            throw new Error("Missing checkout URL in response.");
+        }
+    } catch (err) {
+        console.error("Upgrade checkout failed:", err);
+        showToast(`Checkout failed: ${err.message}`, "error");
+        logTerminal(`Checkout session creation failed: ${err.message}`, "error");
+    }
+}
+
+function checkPaymentStatus() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+        state.isPro = true;
+        updateTierUI();
+        showToast('Midias AI Pro subscription activated! Thank you! ✦', 'success');
+        logTerminal('Stripe payment successful. Pro subscription activated!', 'success');
+        // Clean URL params without page reload
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+    } else if (params.get('payment') === 'cancelled') {
+        showToast('Subscription checkout cancelled. No charges were made.', 'warning');
+        logTerminal('Stripe payment session cancelled by user.', 'warning');
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+    }
+}
+

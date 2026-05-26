@@ -74,6 +74,10 @@
                     </button>
                     <div id="user-profile-menu" style="display: none; align-items: center; gap: 0.5rem;">
                         <span id="user-email-badge" class="badge-user-email">guest@midias.ai</span>
+                        <span id="user-tier-badge" class="badge-tier-free">FREE</span>
+                        <button id="upgrade-pro-btn" class="btn btn-gold" style="padding: 6px 12px; font-size: 0.72rem; border-radius: 4px; display: none;">
+                            Upgrade ✦
+                        </button>
                         <button id="logout-btn" class="btn btn-danger-outline" title="Log Out" style="padding: 6px 10px; font-size: 0.75rem;">
                             <i class="fa-solid fa-right-from-bracket"></i>
                         </button>
@@ -407,6 +411,33 @@
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- Stripe Paywall Modal -->
+    <div class="onboarding-modal-overlay" id="paywall-modal" style="display: none;">
+        <div class="onboarding-modal-content glass-card" style="max-width: 450px; padding: 2.5rem; text-align: center;">
+            <i class="fa-solid fa-gem gold-text fa-bounce" style="font-size: 3.5rem; margin-bottom: 1.5rem; display: block; color: var(--gold);"></i>
+            <h2 style="font-size: 1.8rem; margin-bottom: 0.75rem;">Unlock <span class="gold-text">Midias AI Pro</span></h2>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.5;">
+                You've reached the free tier limit of 5 messages. Upgrade to Pro to unlock unlimited chat, high-fidelity Gemini Pro models, and one-click autonomous deployments to GitHub.
+            </p>
+            
+            <div style="background: rgba(255, 215, 0, 0.05); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; text-align: left;">
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem;">
+                    <li><i class="fa-solid fa-circle-check gold-text" style="margin-right: 0.5rem;"></i> Unlimited AI Co-founder Messages</li>
+                    <li><i class="fa-solid fa-circle-check gold-text" style="margin-right: 0.5rem;"></i> Advanced Gemini 3 Pro Models</li>
+                    <li><i class="fa-solid fa-circle-check gold-text" style="margin-right: 0.5rem;"></i> Autonomous GitHub Deployments ($0 Cost)</li>
+                    <li><i class="fa-solid fa-circle-check gold-text" style="margin-right: 0.5rem;"></i> Priority Support & Leads Monitoring</li>
+                </ul>
+            </div>
+            
+            <button class="btn btn-gold" id="paywall-upgrade-btn" style="width: 100%; padding: 12px; font-size: 0.95rem; margin-bottom: 0.75rem;">
+                Upgrade for $15/month ✦
+            </button>
+            <button class="btn btn-xs" id="close-paywall-btn" style="background: none; border: none; color: var(--text-muted); cursor: pointer; width: 100%; text-align: center;">
+                Maybe Later
+            </button>
+        </div>
     </div>
 
     <!-- Authentication Modal -->
