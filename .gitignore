@@ -12,3 +12,7 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Wrangler build artifacts
+_worker.bundle
+

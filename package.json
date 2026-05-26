@@ -4,7 +4,8 @@
   "description": "Midias AI - AI Co-Founder Dashboard powered by Midias",
   "main": "index.html",
   "scripts": {
-    "dev": "npx wrangler pages dev . --port=8789 --compatibility-date=2026-05-25"
+    "dev": "npx wrangler pages dev . --port=8789 --compatibility-date=2026-05-25",
+    "build": "npx wrangler pages functions build --compatibility-date=2026-05-25"
   },
   "keywords": [
     "ai",
