@@ -1805,4 +1805,33 @@ tbody tr:hover {
     white-space: pre;
 }
 
+/* Inline Code */
+code.inline-code {
+    background: rgba(255, 215, 0, 0.08);
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    color: var(--gold);
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.85em;
+}
+
+/* Blockquotes */
+blockquote {
+    border-left: 3px solid var(--gold);
+    background: rgba(255, 215, 0, 0.02);
+    padding: 0.5rem 0.75rem;
+    margin: 0.5rem 0;
+    color: var(--text-secondary);
+    font-style: italic;
+    border-radius: 0 4px 4px 0;
+}
+
+/* Horizontal Rules */
+hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 1rem 0;
+}
+
 

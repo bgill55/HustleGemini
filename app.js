@@ -1477,7 +1477,7 @@ function parseJSONFromText(text) {
     }
 }
 
-// Helper: Render simple markdown paragraphs, bold, bullet points
+// Helper: Render simple markdown paragraphs, bold, italics, code, list items, headers
 function formatMarkdown(text) {
     if (!text) return '';
     
@@ -1492,20 +1492,45 @@ function formatMarkdown(text) {
     // Safety escape
     html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     
+    // Inline code (single backticks)
+    html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+
     // Bold
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
+    html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+
+    // Italics
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
+
+    // Strikethrough
+    html = html.replace(/~~(.*?)~~/g, '<del>$1</del>');
+
+    // Blockquotes
+    html = html.replace(/^\>\s+(.*?)$/gm, '<blockquote>$1</blockquote>');
+
+    // Horizontal Rules
+    html = html.replace(/^(?:---|\*\*\*|___)\s*$/gm, '<hr>');
+
     // Markdown links
     html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
 
-    // Bullet points
+    // Bullet points & Task lists
     if (html.includes('\n* ') || html.includes('\n- ')) {
         const lines = html.split('\n');
         let inList = false;
         html = lines.map(line => {
             const trimmed = line.trim();
             if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
-                const content = trimmed.substring(2);
+                let content = trimmed.substring(2);
+                
+                // Parse task list checkbox
+                if (content.startsWith('[ ] ')) {
+                    content = `<input type="checkbox" disabled style="accent-color: var(--gold); margin-right: 0.25rem;"> ` + content.substring(4);
+                } else if (content.startsWith('[x] ') || content.startsWith('[X] ')) {
+                    content = `<input type="checkbox" checked disabled style="accent-color: var(--gold); margin-right: 0.25rem;"> ` + content.substring(4);
+                }
+
                 let listHtml = '';
                 if (!inList) {
                     listHtml += '<ul>';
