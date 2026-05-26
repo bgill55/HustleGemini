@@ -266,11 +266,15 @@ function initEventListeners() {
         handleUserMessage(userMsg);
     });
 
-    // Quick Action prompts
+    // Quick Action prompts - populates chat input for review/editing instead of auto-submitting
     document.querySelectorAll('.quick-prompt-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const prompt = btn.getAttribute('data-prompt');
-            handleUserMessage(prompt);
+            const chatInput = document.getElementById('chat-input');
+            if (chatInput) {
+                chatInput.value = prompt;
+                chatInput.focus();
+            }
         });
     });
 
