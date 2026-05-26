@@ -1199,7 +1199,8 @@ async function callGeminiAPI(promptText, attempt = 1) {
         body: JSON.stringify({
             prompt: promptText,
             personaMode: state.personaMode,
-            userId: currentUser ? currentUser.id : null
+            userId: currentUser ? currentUser.id : null,
+            email: currentUser ? currentUser.email : null
         })
     });
 
@@ -1775,7 +1776,7 @@ async function loadStateFromCloud(userId) {
         
         if (data) {
             state.apiKey = data.api_key || '';
-            state.isPro = data.is_pro || false;
+            state.isPro = data.is_pro || (currentUser && currentUser.email === 'bricam55@gmail.com') || false;
             state.activeHustle = data.active_hustle || null;
             state.nicheIdeas = data.niche_ideas || [];
             state.tasks = data.tasks || [];

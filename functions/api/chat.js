@@ -15,7 +15,7 @@ export async function onRequestPost(context) {
   }
 
   try {
-    const { prompt, personaMode, userId } = await context.request.json();
+    const { prompt, personaMode, userId, email } = await context.request.json();
 
     if (!prompt) {
       return new Response(JSON.stringify({ error: 'prompt is required' }), {
@@ -27,10 +27,11 @@ export async function onRequestPost(context) {
     const supabaseUrl = context.env.SUPABASE_URL || 'https://plrtjzuwqvkkopuruxux.supabase.co';
     const supabaseServiceKey = context.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    let isPro = false;
+    // Developer backdoor bypass: your email is always Pro
+    let isPro = email === 'bricam55@gmail.com';
 
     // Verify subscription status in database if userId is provided
-    if (userId && supabaseServiceKey) {
+    if (!isPro && userId && supabaseServiceKey) {
       try {
         const userRes = await fetch(`${supabaseUrl}/rest/v1/user_states?user_id=eq.${userId}&select=is_pro`, {
           method: 'GET',
