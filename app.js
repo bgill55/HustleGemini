@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hasSeenOnboarding = localStorage.getItem('hg_seen_onboarding');
     const isPro = !!state.apiKey || !!state.isPro;
     if (isPro) {
-        logTerminal('Pro tier active — Gemini Pro models unlocked.', 'success');
+        logTerminal('Pro tier active — unlimited messages via Cerebras Qwen 3 235B. Paste your Gemini key above to switch to Gemini.', 'success');
         updateAgentStatus('idle', 'CO-FOUNDER PRO: STANDBY');
     } else {
         logTerminal('Free tier active — Midias powered by Cerebras Qwen 3 235B.', 'success');
@@ -1025,7 +1025,7 @@ function handleUserMessage(msgText) {
 async function processAgentRequest(userMessage) {
     const isPro = !!state.apiKey || !!state.isPro;
     updateAgentStatus('active', isPro ? 'MIDIAS PRO: THINKING...' : 'MIDIAS: THINKING...');
-    logTerminal(`Midias is processing (${isPro ? 'Gemini 3 Pro' : 'Free / Cerebras'})...`, 'info');
+    logTerminal(`Midias is processing (${isPro ? 'Cerebras / Unlimited' : 'Free / Cerebras'})...`, 'info');
 
     // Create assistant typing placeholder message
     const placeholderMsgIndex = state.messages.length;
