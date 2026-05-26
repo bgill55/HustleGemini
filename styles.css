@@ -1647,3 +1647,17 @@ tbody tr:hover {
     }
 }
 
+.badge-user-email {
+    background: var(--gold-faint);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-family: var(--font-body);
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+

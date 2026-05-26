@@ -68,6 +68,18 @@
                     </button>
                 </div>
                 
+                <div class="user-auth-badge" id="user-auth-badge" style="margin-right: 0.5rem; display: flex; align-items: center;">
+                    <button id="auth-trigger-btn" class="btn btn-gold-outline" style="padding: 6px 12px; font-size: 0.75rem;">
+                        <i class="fa-solid fa-user"></i> Sign In
+                    </button>
+                    <div id="user-profile-menu" style="display: none; align-items: center; gap: 0.5rem;">
+                        <span id="user-email-badge" class="badge-user-email">guest@midias.ai</span>
+                        <button id="logout-btn" class="btn btn-danger-outline" title="Log Out" style="padding: 6px 10px; font-size: 0.75rem;">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <button id="export-plan-btn" class="btn btn-gold-outline" title="Export Action Plan & Vault to Markdown" style="margin-right: 0.5rem;">
                     <i class="fa-solid fa-download"></i> Export
                 </button>
@@ -397,6 +409,42 @@
         </main>
     </div>
 
+    <!-- Authentication Modal -->
+    <div class="onboarding-modal-overlay" id="auth-modal" style="display: none;">
+        <div class="onboarding-modal-content glass-card" style="max-width: 400px; padding: 2rem;">
+            <div class="onboarding-header" style="text-align: center; margin-bottom: 1.5rem;">
+                <i class="fa-solid fa-user-lock gold-text" style="font-size: 2.5rem; margin-bottom: 1rem; display: block;"></i>
+                <h2 id="auth-modal-title" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Sign In to <span class="gold-text">Midias AI</span></h2>
+                <p id="auth-modal-subtitle" style="font-size: 0.85rem; color: var(--text-secondary);">Log in to sync your side hustles and settings.</p>
+            </div>
+
+            <div class="onboarding-body">
+                <form id="auth-form" style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
+                    <div class="modal-input-group" style="display: flex; flex-direction: column; gap: 0.35rem; align-items: stretch; width: 100%;">
+                        <label for="auth-email" style="font-size: 0.8rem; color: var(--text-secondary); text-align: left;">Email Address</label>
+                        <input type="email" id="auth-email" class="glass-input" placeholder="you@example.com" required style="width: 100%; box-sizing: border-box; padding: 0.6rem 0.8rem;">
+                    </div>
+                    <div class="modal-input-group" style="display: flex; flex-direction: column; gap: 0.35rem; align-items: stretch; width: 100%;">
+                        <label for="auth-password" style="font-size: 0.8rem; color: var(--text-secondary); text-align: left;">Password</label>
+                        <input type="password" id="auth-password" class="glass-input" placeholder="••••••••" required style="width: 100%; box-sizing: border-box; padding: 0.6rem 0.8rem;">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-gold" id="auth-submit-btn" style="width: 100%; margin-top: 0.5rem; padding: 10px;">
+                        Sign In →
+                    </button>
+                </form>
+
+                <p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 1.25rem; text-align: center;">
+                    <span id="auth-switch-text">Don't have an account?</span>
+                    <a href="#" id="auth-switch-link" class="gold-text" style="text-decoration: underline;">Sign Up</a>
+                </p>
+                <button class="btn btn-xs" id="close-auth-btn" style="background: none; border: none; color: var(--text-muted); cursor: pointer; margin-top: 1rem; width: 100%; text-align: center;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Onboarding Modal -->
     <div class="onboarding-modal-overlay" id="onboarding-modal" style="display: none;">
         <div class="onboarding-modal-content glass-card">
@@ -451,6 +499,8 @@
     <!-- Notification Toast -->
     <div class="toast-container" id="toast-container"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

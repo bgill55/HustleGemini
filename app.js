@@ -32,11 +32,17 @@ Click one of the quick actions below, or type anything to get started! Upgrade t
     personaMode: 'bootstrapper' // 'bootstrapper', 'aggressive', or 'audience'
 };
 
+// Supabase Client and Session State
+let supabaseClient = null;
+let currentUser = null;
+let authMode = 'signin'; // 'signin' or 'signup'
+
 // Default Tasks if none exist
 const DEFAULT_EXPENSES = [];
 
 // Initialize Page
 document.addEventListener('DOMContentLoaded', () => {
+    initSupabase();
     loadStateFromLocalStorage();
     initEventListeners();
     renderAll();
@@ -141,6 +147,8 @@ function saveStateToLocalStorage() {
     localStorage.setItem('hg_target', state.targetRevenue);
     localStorage.setItem('hg_persona', state.personaMode);
     localStorage.setItem('hg_trends_geo', state.trendsGeo);
+    
+    triggerCloudSync();
 }
 
 // Initialise Event Listeners
@@ -466,6 +474,96 @@ function initEventListeners() {
     if (refreshTrendsBtn) {
         refreshTrendsBtn.addEventListener('click', () => {
             fetchGoogleTrends(true); // force refresh bypasses cache
+        });
+    }
+
+    // Auth UI Event Listeners
+    const authModal = document.getElementById('auth-modal');
+    const authTriggerBtn = document.getElementById('auth-trigger-btn');
+    const closeAuthBtn = document.getElementById('close-auth-btn');
+    const authSwitchLink = document.getElementById('auth-switch-link');
+    const authForm = document.getElementById('auth-form');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    if (authTriggerBtn && authModal) {
+        authTriggerBtn.addEventListener('click', () => {
+            if (!window.supabaseClient) {
+                showToast("Please configure Supabase credentials in config.js first.", "warning");
+                return;
+            }
+            authModal.style.display = 'flex';
+        });
+    }
+
+    if (closeAuthBtn && authModal) {
+        closeAuthBtn.addEventListener('click', () => {
+            authModal.style.display = 'none';
+        });
+    }
+
+    if (authSwitchLink) {
+        authSwitchLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const modalTitle = document.getElementById('auth-modal-title');
+            const modalSubtitle = document.getElementById('auth-modal-subtitle');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const switchText = document.getElementById('auth-switch-text');
+
+            if (authMode === 'signin') {
+                authMode = 'signup';
+                modalTitle.innerHTML = 'Create your <span class="gold-text">Midias AI</span> Account';
+                modalSubtitle.innerText = 'Get started by creating a free account.';
+                submitBtn.innerText = 'Create Account →';
+                switchText.innerText = 'Already have an account?';
+                authSwitchLink.innerText = 'Sign In';
+            } else {
+                authMode = 'signin';
+                modalTitle.innerHTML = 'Sign In to <span class="gold-text">Midias AI</span>';
+                modalSubtitle.innerText = 'Log in to sync your side hustles and settings.';
+                submitBtn.innerText = 'Sign In →';
+                switchText.innerText = "Don't have an account?";
+                authSwitchLink.innerText = 'Sign Up';
+            }
+        });
+    }
+
+    if (authForm) {
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+            const submitBtn = document.getElementById('auth-submit-btn');
+
+            const prevBtnText = submitBtn.innerText;
+            submitBtn.innerText = 'Processing...';
+            submitBtn.disabled = true;
+
+            try {
+                if (authMode === 'signin') {
+                    const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    authModal.style.display = 'none';
+                } else {
+                    const { data, error } = await window.supabaseClient.auth.signUp({ email, password });
+                    if (error) throw error;
+                    showToast('Registration successful! Check email for verification link.', 'success');
+                    authModal.style.display = 'none';
+                }
+            } catch (err) {
+                console.error("Auth action failed:", err);
+                showToast(err.message, 'error');
+            } finally {
+                submitBtn.innerText = prevBtnText;
+                submitBtn.disabled = false;
+            }
+        });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            if (window.supabaseClient) {
+                await window.supabaseClient.auth.signOut();
+            }
         });
     }
 }
@@ -1498,4 +1596,132 @@ function exportBusinessPlan() {
 
     logTerminal('Business plan exported successfully!', 'success');
     showToast('Business Plan Exported!', 'success');
+}
+
+// ==========================================
+// SUPABASE SYNC AND AUTH OPERATIONS
+// ==========================================
+
+function initSupabase() {
+    if (typeof supabase !== 'undefined' && CONFIG && CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY && CONFIG.SUPABASE_URL.indexOf("your-project-id") === -1) {
+        try {
+            window.supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+            
+            // Listen for auth state changes
+            window.supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (session) {
+                    currentUser = session.user;
+                    handleUserLoggedIn(session.user);
+                } else {
+                    currentUser = null;
+                    handleUserLoggedOut();
+                }
+            });
+        } catch (e) {
+            console.error("Supabase initialization error:", e);
+        }
+    } else {
+        console.log("Supabase not configured or running in Local Mode.");
+    }
+}
+
+async function handleUserLoggedIn(user) {
+    document.getElementById('auth-trigger-btn').style.display = 'none';
+    const profileMenu = document.getElementById('user-profile-menu');
+    profileMenu.style.display = 'flex';
+    document.getElementById('user-email-badge').innerText = user.email;
+    
+    logTerminal(`User logged in: ${user.email}`, 'info');
+    showToast(`Welcome back!`, 'success');
+    
+    await loadStateFromCloud(user.id);
+}
+
+function handleUserLoggedOut() {
+    document.getElementById('auth-trigger-btn').style.display = 'block';
+    document.getElementById('user-profile-menu').style.display = 'none';
+    
+    logTerminal('User logged out. Loaded local workspace.', 'info');
+    showToast('Logged out successfully.', 'info');
+    
+    loadStateFromLocalStorage();
+    renderAll();
+}
+
+async function loadStateFromCloud(userId) {
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('user_states')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle();
+        
+        if (error) throw error;
+        
+        if (data) {
+            state.apiKey = data.api_key || '';
+            state.activeHustle = data.active_hustle || null;
+            state.nicheIdeas = data.niche_ideas || [];
+            state.tasks = data.tasks || [];
+            state.expenses = data.expenses || [];
+            state.messages = data.messages || state.messages;
+            state.vault = data.vault || { copy: '', persona: '', swot: '' };
+            state.initialBudget = data.initial_budget !== null ? parseFloat(data.initial_budget) : 100;
+            state.targetRevenue = data.target_revenue !== null ? parseFloat(data.target_revenue) : 20000;
+            state.personaMode = data.persona_mode || 'bootstrapper';
+            
+            // Populate inputs
+            const apiKeyInput = document.getElementById('api-key-input');
+            if (apiKeyInput) apiKeyInput.value = state.apiKey;
+            
+            const selector = document.getElementById('midias-persona-select');
+            if (selector) selector.value = state.personaMode;
+            
+            logTerminal('Successfully synchronized workspace from cloud.', 'success');
+            renderAll();
+        } else {
+            logTerminal('No cloud state found. Uploading local workspace...', 'info');
+            await saveStateToCloud();
+        }
+    } catch (err) {
+        console.error("Failed to load cloud state:", err);
+        logTerminal(`Failed to load cloud state: ${err.message}. Running in offline fallback.`, 'error');
+    }
+}
+
+let cloudSyncTimeout = null;
+
+function triggerCloudSync() {
+    if (!window.supabaseClient || !currentUser) return;
+    
+    if (cloudSyncTimeout) clearTimeout(cloudSyncTimeout);
+    cloudSyncTimeout = setTimeout(saveStateToCloud, 1500);
+}
+
+async function saveStateToCloud() {
+    if (!window.supabaseClient || !currentUser) return;
+    
+    try {
+        const { error } = await window.supabaseClient
+            .from('user_states')
+            .upsert({
+                user_id: currentUser.id,
+                api_key: state.apiKey,
+                active_hustle: state.activeHustle,
+                niche_ideas: state.nicheIdeas,
+                tasks: state.tasks,
+                expenses: state.expenses,
+                messages: state.messages,
+                vault: state.vault,
+                initial_budget: state.initialBudget,
+                target_revenue: state.targetRevenue,
+                persona_mode: state.personaMode,
+                updated_at: new Date().toISOString()
+            });
+            
+        if (error) throw error;
+        logTerminal('Workspace cloud backup updated.', 'success');
+    } catch (err) {
+        console.error("Cloud sync failed:", err);
+    }
 }
