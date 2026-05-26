@@ -589,6 +589,56 @@ function initEventListeners() {
             if (paywallModal) paywallModal.style.display = 'none';
         });
     }
+
+    // Custom Idea Form listener
+    const customIdeaForm = document.getElementById('custom-idea-form');
+    if (customIdeaForm) {
+        customIdeaForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const titleInput = document.getElementById('custom-idea-title');
+            const diffInput = document.getElementById('custom-idea-difficulty');
+            const mrrInput = document.getElementById('custom-idea-mrr');
+            const descInput = document.getElementById('custom-idea-description');
+            
+            const titleVal = titleInput.value.trim();
+            const diffVal = diffInput.value;
+            const mrrVal = mrrInput.value.trim();
+            const descVal = descInput.value.trim();
+            
+            if (!titleVal || !mrrVal || !descVal) {
+                showToast("Please fill out all fields for your custom idea.", "warning");
+                return;
+            }
+            
+            const newIdea = {
+                id: 'idea_' + Date.now(),
+                title: titleVal,
+                description: descVal,
+                difficulty: diffVal,
+                mrr: mrrVal
+            };
+            
+            if (!state.nicheIdeas) state.nicheIdeas = [];
+            state.nicheIdeas.push(newIdea);
+            
+            // Set the new idea as active hustle
+            state.activeHustle = newIdea;
+            
+            saveStateToLocalStorage();
+            triggerCloudSync();
+            
+            renderNicheIdeas();
+            renderOverview();
+            
+            // Reset form
+            customIdeaForm.reset();
+            
+            showToast(`Custom idea "${titleVal}" added and set active!`, "success");
+            logTerminal(`Added Custom Business Concept: "${titleVal}" (Set as Active)`, "success");
+            logTerminal('You can now generate action plans or SWOT analysis for this idea!', 'info');
+        });
+    }
 }
 
 // Setup budget parameter inline edits helper

@@ -236,6 +236,26 @@
                             </div>
                         </div>
 
+                        <!-- Add Custom Idea Form -->
+                        <div class="custom-idea-section" style="margin-top: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 215, 0, 0.15); border-radius: 8px; padding: 1.25rem;">
+                            <h3 style="font-size: 0.95rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; color: var(--gold);"><i class="fa-solid fa-circle-plus"></i> ADD CUSTOM BUSINESS IDEA</h3>
+                            <form id="custom-idea-form" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.75rem;">
+                                    <input type="text" id="custom-idea-title" placeholder="Idea title (e.g., Local Window Cleaning App)" required style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 0.5rem 0.75rem; color: #fff; font-size: 0.82rem;">
+                                    <select id="custom-idea-difficulty" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 0.5rem 0.75rem; color: #fff; font-size: 0.82rem;">
+                                        <option value="Easy">Easy Difficulty</option>
+                                        <option value="Medium">Medium Difficulty</option>
+                                        <option value="Hard">Hard Difficulty</option>
+                                    </select>
+                                    <input type="text" id="custom-idea-mrr" placeholder="Est. MRR (e.g., $1,000 - $3,000/mo)" required style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 0.5rem 0.75rem; color: #fff; font-size: 0.82rem;">
+                                </div>
+                                <div style="display: flex; gap: 0.75rem;">
+                                    <textarea id="custom-idea-description" placeholder="Briefly describe the business model, target audience, and how it works..." required rows="2" style="flex: 1; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 0.5rem 0.75rem; color: #fff; font-size: 0.82rem; font-family: var(--font-body); resize: none;"></textarea>
+                                    <button type="submit" class="btn btn-gold" style="padding: 0 1.5rem; font-size: 0.85rem;"><i class="fa-solid fa-plus"></i> Add Idea</button>
+                                </div>
+                            </form>
+                        </div>
+
                         <div class="ideas-section" style="margin-top: 2rem; border-top: 1px dashed rgba(255, 215, 0, 0.15); padding-top: 1.5rem;">
                             <div class="section-actions">
                                 <h3>GENERATED NICHE OPPORTUNITIES</h3>
