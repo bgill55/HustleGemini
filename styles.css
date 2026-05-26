@@ -565,8 +565,13 @@ body {
 .project-details {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     height: 100%;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.no-active-project {
+    margin: auto;
 }
 
 .no-active-project, .empty-state {
