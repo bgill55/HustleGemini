@@ -453,14 +453,15 @@ function setupBudgetEditHandler(elementId, stateField) {
     el.addEventListener('blur', () => {
         let val = el.innerText.replace(/[^0-9.]/g, ''); // strip $, commas, etc.
         let num = parseFloat(val);
-        if (isNaN(num) || num <= 0) {
+        const isInvalid = stateField === 'initialBudget' ? (isNaN(num) || num < 0) : (isNaN(num) || num <= 0);
+        if (isInvalid) {
             // Revert to current value formatted
             if (stateField === 'initialBudget') {
                 el.innerText = `$${state.initialBudget.toFixed(2)}`;
             } else {
                 el.innerText = `$${state.targetRevenue.toLocaleString()}`;
             }
-            showToast('Please enter a valid positive number.', 'error');
+            showToast(stateField === 'initialBudget' ? 'Please enter a valid non-negative number.' : 'Please enter a valid positive number.', 'error');
             return;
         }
         
@@ -554,7 +555,12 @@ function renderOverview() {
     document.getElementById('overview-spent').innerText = `$${totalSpent.toFixed(2)}`;
     document.getElementById('overview-remaining').innerText = `$${totalRemaining.toFixed(2)}`;
 
-    const fillPercent = Math.max(0, (totalRemaining / state.initialBudget) * 100);
+    let fillPercent = 100;
+    if (state.initialBudget > 0) {
+        fillPercent = Math.max(0, (totalRemaining / state.initialBudget) * 100);
+    } else if (totalSpent > 0) {
+        fillPercent = 0;
+    }
     const progressFill = document.getElementById('overview-progress-fill');
     progressFill.style.width = `${fillPercent}%`;
 
@@ -739,7 +745,10 @@ function renderFinances() {
     const remainingEl = document.getElementById('finance-total-remaining');
     remainingEl.innerText = `$${totalRemaining.toFixed(2)}`;
 
-    if (totalRemaining < (state.initialBudget * 0.2)) {
+    const isOverBudget = state.initialBudget > 0 
+        ? (totalRemaining < (state.initialBudget * 0.2)) 
+        : (totalSpent > 0);
+    if (isOverBudget) {
         remainingEl.className = 'widget-value spent-text';
     } else {
         remainingEl.className = 'widget-value gold-text gold-glow-text';
