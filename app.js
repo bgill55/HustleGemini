@@ -22,7 +22,8 @@ Click one of the quick actions below, or type anything to get started! Upgrade t
     vault: {
         copy: '',
         persona: '',
-        swot: ''
+        swot: '',
+        assets: ''
     },
     initialBudget: 100,
     targetRevenue: 20000,
@@ -257,7 +258,7 @@ function initEventListeners() {
                     text: `**Midias (AI Co-founder)** is active. Ready to build a side hustle from scratch with a $100 budget.\n\nTo begin, enter your Gemini API Key in the header, then click one of the quick actions below or type a message!`
                 }
             ];
-            state.vault = { copy: '', persona: '', swot: '' };
+            state.vault = { copy: '', persona: '', swot: '', assets: '' };
             apiKeyInput.value = '';
             saveStateToLocalStorage();
             renderAll();
@@ -423,7 +424,7 @@ function initEventListeners() {
     });
 
     document.getElementById('clear-vault-btn').addEventListener('click', () => {
-        state.vault = { copy: '', persona: '', swot: '' };
+        state.vault = { copy: '', persona: '', swot: '', assets: '' };
         saveStateToLocalStorage();
         renderVault();
         showToast('Resource vault cleared.', 'info');
@@ -438,6 +439,7 @@ function initEventListeners() {
             if (target === 'copy-content') content = state.vault.copy;
             else if (target === 'persona-content') content = state.vault.persona;
             else if (target === 'swot-content') content = state.vault.swot;
+            else if (target === 'assets-content') content = state.vault.assets;
 
             if (content && !content.includes('will appear here')) {
                 // Strip markdown styling for plain copy or keep it
@@ -734,6 +736,52 @@ function renderChat() {
             contentDiv.innerHTML = formatMarkdown(msg.text);
         }
 
+        if (msg.actionTaskId) {
+            const actionContainer = document.createElement('div');
+            actionContainer.className = 'chat-action-container';
+            
+            // Mark completed button
+            const completeBtn = document.createElement('button');
+            completeBtn.className = 'btn btn-gold btn-sm';
+            
+            // Check if task is already completed
+            const task = state.tasks.find(t => t.id === msg.actionTaskId);
+            const isCompleted = task ? task.completed : false;
+            
+            if (isCompleted) {
+                completeBtn.className = 'btn btn-success btn-sm';
+                completeBtn.disabled = true;
+                completeBtn.innerHTML = '<i class="fa-solid fa-check"></i> Completed';
+            } else {
+                completeBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Mark Task Completed';
+                completeBtn.addEventListener('click', () => {
+                    const activeTask = state.tasks.find(t => t.id === msg.actionTaskId);
+                    if (activeTask) {
+                        activeTask.completed = true;
+                        saveStateToLocalStorage();
+                        renderTasks();
+                        completeBtn.className = 'btn btn-success btn-sm';
+                        completeBtn.disabled = true;
+                        completeBtn.innerHTML = '<i class="fa-solid fa-check"></i> Completed';
+                        logTerminal(`Task "${activeTask.title}" marked as completed via co-founder assistant.`, 'success');
+                        showToast('Task marked as completed!', 'success');
+                    }
+                });
+            }
+            
+            // View Vault button
+            const vaultBtn = document.createElement('button');
+            vaultBtn.className = 'btn btn-gold-outline btn-sm';
+            vaultBtn.innerHTML = '<i class="fa-solid fa-folder-open"></i> View Deliverables';
+            vaultBtn.addEventListener('click', () => {
+                switchTab('vault');
+            });
+            
+            actionContainer.appendChild(completeBtn);
+            actionContainer.appendChild(vaultBtn);
+            contentDiv.appendChild(actionContainer);
+        }
+
         msgDiv.appendChild(avatarDiv);
         msgDiv.appendChild(contentDiv);
         chatContainer.appendChild(msgDiv);
@@ -887,6 +935,7 @@ function renderTasks() {
                 li.innerHTML = `
                     <input type="checkbox" ${task.completed ? 'checked' : ''}>
                     <span>${task.title}</span>
+                    ${!task.completed ? `<button class="help-task-btn" title="Ask Midias to complete this task"><i class="fa-solid fa-wand-magic-sparkles"></i> Help Me</button>` : ''}
                     <button class="delete-task-btn" title="Delete Task"><i class="fa-solid fa-xmark"></i></button>
                 `;
 
@@ -896,7 +945,16 @@ function renderTasks() {
                     saveStateToLocalStorage();
                     li.className = `task-item ${task.completed ? 'completed' : ''}`;
                     logTerminal(`Task Checked: "${task.title}" updated to ${task.completed ? 'COMPLETED' : 'INCOMPLETE'}`, 'info');
+                    renderTasks(); // Re-render to update Help Me buttons visibility
                 });
+
+                // Help click
+                const helpBtn = li.querySelector('.help-task-btn');
+                if (helpBtn) {
+                    helpBtn.addEventListener('click', () => {
+                        helpWithTask(task.id);
+                    });
+                }
 
                 // Delete click
                 li.querySelector('.delete-task-btn').addEventListener('click', () => {
@@ -992,14 +1050,16 @@ function renderVault() {
     const landingEl = document.getElementById('vault-landing-copy');
     const personaEl = document.getElementById('vault-buyer-persona');
     const swotEl = document.getElementById('vault-business-swot');
+    const assetsEl = document.getElementById('vault-generated-assets');
 
-    landingEl.innerHTML = state.vault.copy ? formatMarkdown(state.vault.copy) : '<p class="empty-vault-text">Landing copy will appear here once generated.</p>';
-    personaEl.innerHTML = state.vault.persona ? formatMarkdown(state.vault.persona) : '<p class="empty-vault-text">Target persona analysis will appear here once generated.</p>';
-    swotEl.innerHTML = state.vault.swot ? formatMarkdown(state.vault.swot) : '<p class="empty-vault-text">Business SWOT analysis will appear here once generated.</p>';
+    if (landingEl) landingEl.innerHTML = state.vault.copy ? formatMarkdown(state.vault.copy) : '<p class="empty-vault-text">Landing copy will appear here once generated.</p>';
+    if (personaEl) personaEl.innerHTML = state.vault.persona ? formatMarkdown(state.vault.persona) : '<p class="empty-vault-text">Target persona analysis will appear here once generated.</p>';
+    if (swotEl) swotEl.innerHTML = state.vault.swot ? formatMarkdown(state.vault.swot) : '<p class="empty-vault-text">Business SWOT analysis will appear here once generated.</p>';
+    if (assetsEl) assetsEl.innerHTML = state.vault.assets ? formatMarkdown(state.vault.assets) : '<p class="empty-vault-text">Code, templates, or files created during task execution will appear here.</p>';
 }
 
 // Send user message to UI and handle processing
-function handleUserMessage(msgText) {
+function handleUserMessage(msgText, targetTaskId = null) {
     const isPro = !!state.apiKey || !!state.isPro;
     const userMessageCount = state.messages.filter(m => m.role === 'user').length;
     
@@ -1018,11 +1078,11 @@ function handleUserMessage(msgText) {
     renderChat();
 
     // Process using API — free tier (Cerebras) or pro tier (Gemini)
-    processAgentRequest(msgText);
+    processAgentRequest(msgText, targetTaskId);
 }
 
 // Process Agent request — routes to free (Cerebras) or pro (Gemini) tier
-async function processAgentRequest(userMessage) {
+async function processAgentRequest(userMessage, targetTaskId = null) {
     const isPro = !!state.apiKey || !!state.isPro;
     updateAgentStatus('active', isPro ? 'MIDIAS PRO: THINKING...' : 'MIDIAS: THINKING...');
     logTerminal(`Midias is processing (${isPro ? 'Cerebras / Unlimited' : 'Free / Cerebras'})...`, 'info');
@@ -1037,12 +1097,18 @@ async function processAgentRequest(userMessage) {
     const isActionPlan = userMessage.toLowerCase().includes('action plan') || userMessage.toLowerCase().includes('action-plan') || userMessage.toLowerCase().includes('checklist');
     const isLandingCopy = userMessage.toLowerCase().includes('landing page copy') || userMessage.toLowerCase().includes('marketing strategy') || userMessage.toLowerCase().includes('draft landing');
     const isNameSlogan = userMessage.toLowerCase().includes('name & slogan') || userMessage.toLowerCase().includes('brand name');
+    const isTaskExecution = targetTaskId !== null;
 
     try {
         let systemPrompt = '';
         let apiPrompt = userMessage;
 
-        if (isBrainstorm) {
+        if (isTaskExecution) {
+            const task = state.tasks.find(t => t.id === targetTaskId);
+            const taskTitle = task ? task.title : 'Task';
+            systemPrompt = getTaskExecutionSystemPrompt(taskTitle);
+            logTerminal(`Midias is working directly on executing: "${taskTitle}"...`, 'info');
+        } else if (isBrainstorm) {
             systemPrompt = getBrainstormSystemPrompt();
             logTerminal('Researching trending niches under $100 starting budget...', 'info');
             simulateTerminalStep('Scanning Google Maps & Fiverr listings...', 800);
@@ -1131,6 +1197,24 @@ async function processAgentRequest(userMessage) {
             }
         }
 
+        if (isTaskExecution) {
+            // Extract code block contents or save raw text
+            let codeContent = '';
+            const codeMatches = [...responseText.matchAll(/```(\w*)\n([\s\S]*?)\n```/g)];
+            if (codeMatches.length > 0) {
+                codeContent = codeMatches.map(m => m[2]).join('\n\n');
+            } else {
+                codeContent = responseText;
+            }
+            state.vault.assets = codeContent;
+            saveStateToLocalStorage();
+            renderVault();
+            
+            // Clean up the TASK_SUCCESS tag if present
+            displayMessage = responseText.replace(/\[TASK_SUCCESS:.*?\]/g, '').trim();
+            logTerminal(`Deliverables saved to Vault under 'Task Code & Deliverables'.`, 'success');
+        }
+
         // Check if there's copywriting in text to save to Vault
         if (isLandingCopy) {
             state.vault.copy = responseText;
@@ -1139,7 +1223,11 @@ async function processAgentRequest(userMessage) {
             logTerminal('Landing Page Copy generated and saved to Resource Vault!', 'success');
         }
 
-        state.messages.push({ role: 'assistant', text: displayMessage });
+        const newMsg = { role: 'assistant', text: displayMessage };
+        if (isTaskExecution) {
+            newMsg.actionTaskId = targetTaskId;
+        }
+        state.messages.push(newMsg);
         saveStateToLocalStorage();
         renderChat();
         
@@ -1392,7 +1480,14 @@ function parseJSONFromText(text) {
 // Helper: Render simple markdown paragraphs, bold, bullet points
 function formatMarkdown(text) {
     if (!text) return '';
-    let html = text;
+    
+    // Extract code blocks first to preserve their formatting
+    const codeBlocks = [];
+    let html = text.replace(/```(\w*)\n([\s\S]*?)\n```/g, (match, lang, code) => {
+        const placeholder = `___CODE_BLOCK_PLACEHOLDER_${codeBlocks.length}___`;
+        codeBlocks.push({ lang: lang || 'code', code });
+        return placeholder;
+    });
     
     // Safety escape
     html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -1439,6 +1534,23 @@ function formatMarkdown(text) {
     html = html.replace(/### (.*?)(?=<br>|<p>|$)/g, '<h3>$1</h3>');
     html = html.replace(/## (.*?)(?=<br>|<p>|$)/g, '<h2>$1</h2>');
     html = html.replace(/# (.*?)(?=<br>|<p>|$)/g, '<h1>$1</h1>');
+
+    // Inject code blocks back with styled elements
+    codeBlocks.forEach((block, index) => {
+        const placeholder = `___CODE_BLOCK_PLACEHOLDER_${index}___`;
+        const escapedCode = block.code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const codeBlockHtml = `
+            <div class="chat-code-block">
+                <div class="code-block-header">
+                    <span class="code-block-lang">${block.lang}</span>
+                    <button class="code-block-copy-btn" onclick="navigator.clipboard.writeText(this.closest('.chat-code-block').querySelector('code').innerText); showToast('Copied to clipboard!', 'success');"><i class="fa-solid fa-copy"></i> Copy</button>
+                </div>
+                <pre><code class="language-${block.lang}">${escapedCode}</code></pre>
+            </div>
+        `;
+        // Use split/join to avoid regex replace issues on code contents
+        html = html.split(placeholder).join(codeBlockHtml);
+    });
 
     return html;
 }
@@ -1782,7 +1894,7 @@ async function loadStateFromCloud(userId) {
             state.tasks = data.tasks || [];
             state.expenses = data.expenses || [];
             state.messages = data.messages || state.messages;
-            state.vault = data.vault || { copy: '', persona: '', swot: '' };
+            state.vault = data.vault || { copy: '', persona: '', swot: '', assets: '' };
             state.initialBudget = data.initial_budget !== null ? parseFloat(data.initial_budget) : 100;
             state.targetRevenue = data.target_revenue !== null ? parseFloat(data.target_revenue) : 20000;
             state.personaMode = data.persona_mode || 'bootstrapper';
@@ -1903,5 +2015,38 @@ function checkPaymentStatus() {
         const newUrl = window.location.pathname;
         window.history.replaceState({}, document.title, newUrl);
     }
+}
+
+// Proactive Task Help Functions
+function helpWithTask(taskId) {
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    // Switch tab to co-founder chat
+    switchTab('chat');
+
+    logTerminal(`Activating Midias task assistant for: "${task.title}"`, 'info');
+    
+    // Automatically trigger message processing
+    handleUserMessage(`🤖 Help me execute this task: "${task.title}"`, taskId);
+}
+
+function switchTab(tabName) {
+    const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+    if (btn) {
+        btn.click();
+    }
+}
+
+function getTaskExecutionSystemPrompt(taskTitle) {
+    return `You are Midias, the active AI Co-founder for our side hustle. The user is a non-tech person and needs hands-on help executing the task: "${taskTitle}".
+Rather than giving general advice or just telling them *how* to do it, provide the *actual deliverables* directly.
+- If it's a coding or landing page task: write the complete high-quality, modern, and beautiful HTML, CSS, or JS code inside standard markdown code blocks.
+- If it's marketing copy or an outreach email: write the complete ready-to-send copy/email templates with clear placeholder fields.
+- If it's setting up a platform or account: explain the step-by-step process in simple, non-tech jargon terms, including official links where possible.
+- If it's search or market research: provide a highly detailed summary of the findings, pricing models, or API options.
+
+Keep your response extremely proactive, clean, and directly copy-pasteable. Explain how to use the outputs in simple, jargon-free steps.
+At the very end of your response, output this marker on a new line: [TASK_SUCCESS: ${taskTitle}] so our system can show completion options.`;
 }
 

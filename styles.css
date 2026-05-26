@@ -1707,4 +1707,102 @@ tbody tr:hover {
     box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);
 }
 
+/* Proactive Help Task styles */
+.help-task-btn {
+    background: var(--gold-faint);
+    border: 1px solid var(--border-color);
+    color: var(--gold);
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-family: var(--font-body);
+    font-weight: 500;
+    margin-left: auto;
+    margin-right: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all var(--transition-speed);
+}
+
+.help-task-btn:hover {
+    background: var(--gold);
+    color: var(--bg-deep);
+    border-color: var(--gold);
+    box-shadow: 0 0 8px var(--gold-glow);
+}
+
+/* Chat Action Buttons Container */
+.chat-action-container {
+    background: rgba(255, 215, 0, 0.05);
+    border: 1px solid var(--border-color);
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* Code Blocks in Chat */
+.chat-code-block {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin: 0.75rem 0;
+    overflow: hidden;
+    font-family: monospace;
+}
+
+.code-block-header {
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.4rem 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.code-block-lang {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--gold);
+}
+
+.code-block-copy-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    transition: all var(--transition-speed);
+}
+
+.code-block-copy-btn:hover {
+    color: var(--gold);
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.chat-code-block pre {
+    margin: 0;
+    padding: 0.75rem;
+    overflow-x: auto;
+}
+
+.chat-code-block code {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.8rem;
+    color: #e0e0e0;
+    line-height: 1.4;
+    white-space: pre;
+}
+
 
