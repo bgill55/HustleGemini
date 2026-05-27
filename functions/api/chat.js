@@ -33,6 +33,73 @@ export async function onRequestPost(context) {
     // The Pro/Free distinction is enforced client-side (5-message cap for Free).
     // Users with their own Gemini key are handled entirely in app.js (client-side).
 
+    // ---- PROACTIVE RETRIEVAL-AUGMENTED GENERATION (RAG) ----
+    let searchResults = '';
+    const needsSearch = prompt.toLowerCase().includes('search') ||
+                        prompt.toLowerCase().includes('latest news') ||
+                        prompt.toLowerCase().includes('recent updates') ||
+                        prompt.toLowerCase().includes('find') ||
+                        prompt.toLowerCase().includes('compile a list') ||
+                        prompt.toLowerCase().includes('research');
+
+    const tavilyKey = context.env.TAVILY_API_KEY;
+    const braveKey = context.env.BRAVE_API_KEY;
+
+    if (needsSearch && (tavilyKey || braveKey)) {
+      let query = prompt;
+      const quoteMatch = prompt.match(/"([^"]+)"/);
+      if (quoteMatch) {
+        query = quoteMatch[1];
+      } else {
+        // Clean up prompt prefix for a cleaner search query
+        query = prompt.replace(/🤖 Help me execute this task:/gi, '')
+                      .replace(/\[Execute Task\]:/gi, '')
+                      .trim();
+      }
+
+      try {
+        if (tavilyKey) {
+          const searchRes = await fetch('https://api.tavily.com/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              api_key: tavilyKey,
+              query: query,
+              search_depth: 'basic',
+              max_results: 5
+            })
+          });
+          if (searchRes.ok) {
+            const searchData = await searchRes.json();
+            searchResults = (searchData.results || []).map((r, i) => 
+              `Source [${i+1}]: ${r.title}\nURL: ${r.url}\nSnippet: ${r.content}`
+            ).join('\n\n');
+          }
+        } else if (braveKey) {
+          const searchRes = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=5`, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'X-Subscription-Token': braveKey
+            }
+          });
+          if (searchRes.ok) {
+            const searchData = await searchRes.json();
+            searchResults = (searchData.web?.results || []).map((r, i) => 
+              `Source [${i+1}]: ${r.title}\nURL: ${r.url}\nSnippet: ${r.description}`
+            ).join('\n\n');
+          }
+        }
+      } catch (searchErr) {
+        console.error('Proactive search failed:', searchErr);
+      }
+    }
+
+    let finalPrompt = prompt;
+    if (searchResults) {
+      finalPrompt = `REAL-TIME WEB SEARCH RESULTS:\n${searchResults}\n\nUSER'S INSTRUCTION:\n${prompt}`;
+    }
+
     // ---- FREE & PRO TIER BACKEND CALL: Route through Cerebras, fallback to Groq on 429 or failure ----
     let fallbackToGroq = false;
     let cerebrasErrorMsg = '';
@@ -51,7 +118,7 @@ export async function onRequestPost(context) {
           },
           body: JSON.stringify({
             model: 'qwen-3-235b-a22b-instruct-2507',
-            messages: [{ role: 'user', content: prompt }],
+            messages: [{ role: 'user', content: finalPrompt }],
             max_tokens: 2048,
             temperature: 0.7
           })
@@ -99,7 +166,7 @@ export async function onRequestPost(context) {
           },
           body: JSON.stringify({
             model: 'llama-3.3-70b-versatile',
-            messages: [{ role: 'user', content: prompt }],
+            messages: [{ role: 'user', content: finalPrompt }],
             max_tokens: 2048,
             temperature: 0.7
           })
