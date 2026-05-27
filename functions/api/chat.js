@@ -95,9 +95,16 @@ export async function onRequestPost(context) {
       }
     }
 
-    let finalPrompt = prompt;
+    const currentDate = new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    let finalPrompt = `[System Information: Today's date is ${currentDate}]\n\n${prompt}`;
     if (searchResults) {
-      finalPrompt = `REAL-TIME WEB SEARCH RESULTS:\n${searchResults}\n\nUSER'S INSTRUCTION:\n${prompt}`;
+      finalPrompt = `[System Information: Today's date is ${currentDate}]\n\nREAL-TIME WEB SEARCH RESULTS:\n${searchResults}\n\nUSER'S INSTRUCTION:\n${prompt}`;
     }
 
     // ---- FREE & PRO TIER BACKEND CALL: Route through Cerebras, fallback to Groq on 429 or failure ----
