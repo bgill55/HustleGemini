@@ -1800,7 +1800,7 @@ function exportBusinessPlan() {
             markdown += `No tasks defined for this phase.\n\n`;
         } else {
             stageTasks.forEach(t => {
-                markdown += `- [${t.completed ? 'x' : ' '}] ${t.text}\n`;
+                markdown += `- [${t.completed ? 'x' : ' '}] ${t.title}\n`;
             });
             markdown += `\n`;
         }
