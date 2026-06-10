@@ -1725,7 +1725,7 @@ function renderGoogleTrends() {
                     ${item.source}
                 </div>
                 <div class="trend-actions" style="margin-top: 0.5rem;">
-                    <button class="btn btn-gold btn-xs generate-trend-hustle-btn" style="padding: 2px 6px; font-size: 0.65rem;" data-trend="${item.title}" data-desc="${item.description}">
+                    <button class="btn btn-gold btn-xs generate-trend-hustle-btn" style="padding: 6px 10px; font-size: 0.75rem; min-height: 44px;" data-trend="${item.title}" data-desc="${item.description}">
                         <i class="fa-solid fa-bolt"></i> Brainstorm Hustle
                     </button>
                 </div>
@@ -1751,7 +1751,7 @@ function renderGoogleTrends() {
                     <a href="${item.link}" target="_blank" class="btn btn-gold-outline btn-xs" style="padding: 2px 6px; font-size: 0.65rem; text-decoration: none;">
                         <i class="fa-solid fa-arrow-up-right-from-square"></i> View Source
                     </a>
-                    <button class="btn btn-gold btn-xs generate-trend-hustle-btn" style="padding: 2px 6px; font-size: 0.65rem; margin-left: 0.25rem;" data-trend="${item.title}">
+                    <button class="btn btn-gold btn-xs generate-trend-hustle-btn" style="padding: 6px 10px; font-size: 0.75rem; min-height: 44px; margin-left: 0.25rem;" data-trend="${item.title}">
                         <i class="fa-solid fa-bolt"></i> Brainstorm Hustle
                     </button>
                 </div>

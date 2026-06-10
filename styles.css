@@ -311,6 +311,7 @@ body {
 .chat-messages-container {
     flex: 1;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 1.25rem;
     display: flex;
     flex-direction: column;
@@ -424,9 +425,9 @@ body {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
-    padding: 0.5rem;
+    padding: 0.65rem 0.5rem;
     border-radius: 6px;
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     cursor: pointer;
     transition: all var(--transition-speed);
     text-align: left;
@@ -434,6 +435,7 @@ body {
     align-items: center;
     gap: 0.4rem;
     font-family: var(--font-body);
+    min-height: 44px;
 }
 
 .quick-prompt-btn:hover {
@@ -523,6 +525,7 @@ body {
 .tab-content-container {
     flex: 1;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 1.5rem;
 }
 
@@ -693,6 +696,7 @@ body {
     padding: 0.75rem;
     flex: 1;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
@@ -881,6 +885,7 @@ body {
     flex-direction: column;
     gap: 0.6rem;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     flex: 1;
 }
 
@@ -934,9 +939,14 @@ body {
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    padding: 0.1rem 0.25rem;
+    padding: 0.25rem 0.4rem;
     border-radius: 4px;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
+    min-width: 36px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .delete-task-btn:hover {
@@ -1016,7 +1026,8 @@ body {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    overflow: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     flex: 1;
 }
 
@@ -1049,7 +1060,12 @@ tbody tr:hover {
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    min-width: 36px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .delete-expense-btn:hover {
@@ -1092,6 +1108,7 @@ tbody tr:hover {
 .vault-card-body {
     flex: 1;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     font-size: 0.82rem;
     line-height: 1.6;
     color: var(--text-secondary);
@@ -1264,11 +1281,11 @@ tbody tr:hover {
     }
     
     .chat-console {
-        height: 500px;
+        height: min(500px, 50vh);
     }
     
     .workspace-console {
-        height: 600px;
+        height: min(600px, 65vh);
     }
 
     .app-container {
@@ -1277,6 +1294,31 @@ tbody tr:hover {
     
     .action-phases {
         grid-template-columns: 1fr;
+    }
+
+    .overview-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        height: auto;
+    }
+
+    .finance-detailed-dashboard {
+        grid-template-columns: 1fr;
+    }
+
+    .expense-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .vault-card {
+        height: auto;
+        min-height: 280px;
+    }
+
+    .vault-card.full-width-vault {
+        height: auto;
+        min-height: 320px;
     }
     
     .vault-grid {
@@ -1299,7 +1341,7 @@ tbody tr:hover {
     .header-controls {
         flex-wrap: wrap;
         justify-content: center;
-        gap: 0.5rem;
+        gap: 0.4rem;
     }
     
     .api-key-container {
@@ -1320,10 +1362,80 @@ tbody tr:hover {
     
     .onboarding-modal-content {
         padding: 1.5rem;
+        width: 95%;
     }
     
     .modal-input-group {
         flex-direction: column;
+    }
+
+    .toast-container {
+        bottom: auto;
+        top: 1rem;
+        right: 0.5rem;
+        left: 0.5rem;
+        align-items: stretch;
+    }
+
+    .toast {
+        font-size: 0.75rem;
+    }
+
+    .quick-prompt-btn {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.78rem;
+    }
+
+    .quick-prompts {
+        grid-template-columns: 1fr;
+    }
+
+    .delete-task-btn {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.85rem;
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .delete-expense-btn {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.85rem;
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .help-task-btn {
+        min-height: 44px;
+        padding: 0.3rem 0.6rem;
+    }
+
+    th, td {
+        padding: 0.65rem 0.75rem;
+        font-size: 0.78rem;
+    }
+
+    .expense-table-container table {
+        min-width: 500px;
+    }
+
+    .finance-widget {
+        padding: 1rem;
+    }
+
+    .widget-value {
+        font-size: 1.2rem;
+    }
+
+    .btn {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.82rem;
+        min-height: 44px;
     }
 }
 
@@ -1361,6 +1473,7 @@ tbody tr:hover {
     gap: 0.75rem;
     max-height: 250px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding-right: 4px;
 }
 
