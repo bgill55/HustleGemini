@@ -289,6 +289,7 @@ body {
     padding: 1.25rem;
     border-bottom: 1px solid var(--border-color);
     background: linear-gradient(180deg, rgba(255, 215, 0, 0.02) 0%, rgba(0, 0, 0, 0) 100%);
+    flex-shrink: 0;
 }
 
 .panel-header h2 {
@@ -305,7 +306,10 @@ body {
 
 /* LEFT PANEL: CHAT CONSOLE */
 .chat-console {
-    min-height: 500px;
+    height: calc(100vh - 3rem);
+    max-height: calc(100vh - 3rem);
+    display: flex;
+    flex-direction: column;
 }
 
 .chat-messages-container {
@@ -419,6 +423,7 @@ body {
     padding: 0.75rem 1.25rem;
     background: rgba(0, 0, 0, 0.2);
     border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .quick-prompt-btn {
@@ -457,6 +462,7 @@ body {
     background-color: var(--bg-panel);
     border-top: 1px solid var(--border-color);
     align-items: flex-end;
+    flex-shrink: 0;
 }
 
 .chat-input-form textarea {
@@ -485,7 +491,10 @@ body {
 
 /* RIGHT PANEL: WORKSPACE */
 .workspace-console {
-    min-height: 600px;
+    height: calc(100vh - 3rem);
+    max-height: calc(100vh - 3rem);
+    display: flex;
+    flex-direction: column;
 }
 
 /* Workspace Tabs */
@@ -494,6 +503,7 @@ body {
     background: rgba(0, 0, 0, 0.3);
     border-bottom: 1px solid var(--border-color);
     padding: 0 1rem;
+    flex-shrink: 0;
 }
 
 .tab-btn {
@@ -1281,11 +1291,13 @@ tbody tr:hover {
     }
     
     .chat-console {
-        min-height: 400px;
+        height: auto;
+        max-height: none;
     }
     
     .workspace-console {
-        min-height: 500px;
+        height: auto;
+        max-height: none;
     }
 
     .app-container {
