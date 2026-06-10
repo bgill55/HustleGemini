@@ -68,7 +68,7 @@ body {
 .app-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    min-height: 100vh;
     max-width: 1600px;
     margin: 0 auto;
     padding: 1.5rem;
@@ -267,10 +267,10 @@ body {
 /* DASHBOARD LAYOUT */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 420px 1fr;
+    grid-template-columns: minmax(350px, 420px) 1fr;
     gap: 1.5rem;
     flex: 1;
-    min-height: 0; /* Important for scroll containers inside grid */
+    min-height: 0;
 }
 
 /* PANELS (COMMON) */
@@ -305,7 +305,7 @@ body {
 
 /* LEFT PANEL: CHAT CONSOLE */
 .chat-console {
-    height: 100%;
+    min-height: 500px;
 }
 
 .chat-messages-container {
@@ -485,7 +485,7 @@ body {
 
 /* RIGHT PANEL: WORKSPACE */
 .workspace-console {
-    height: 100%;
+    min-height: 600px;
 }
 
 /* Workspace Tabs */
@@ -543,9 +543,9 @@ body {
 .overview-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 190px 1fr;
+    grid-template-rows: auto 1fr;
     gap: 1.25rem;
-    height: 100%;
+    min-height: 0;
 }
 
 .dashboard-card {
@@ -1281,14 +1281,15 @@ tbody tr:hover {
     }
     
     .chat-console {
-        height: min(500px, 50vh);
+        min-height: 400px;
     }
     
     .workspace-console {
-        height: min(600px, 65vh);
+        min-height: 500px;
     }
 
     .app-container {
+        min-height: auto;
         height: auto;
     }
     
